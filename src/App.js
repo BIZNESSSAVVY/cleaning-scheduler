@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { FixedSizeList } from 'react-window';
 import { debounce } from 'lodash';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
 
 // Static data generation (unchanged)
@@ -130,6 +132,15 @@ const ModernCleaningSystem = () => {
     );
     setSelectedJobs(new Set());
     setShowAssignModal(false);
+    // Toast notification for assignment confirmation
+    toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
   }, [selectedJobs]);
 
   const printJobs = useCallback((jobIds = []) => {
@@ -476,6 +487,19 @@ Linen: ${job.linenInstructions}` :
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+
       {/* Header */}
       <div className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4">
