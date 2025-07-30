@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { FixedSizeList } from 'react-window';
 import { debounce } from 'lodash';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -124,46 +125,22 @@ const ModernCleaningSystem = () => {
     const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
     const jobIds = Array.from(selectedJobs);
     
-    console.log('Assigning jobs:', { cleanerId, jobIds }); // Debug log
-    
-    if (!cleaner || jobIds.length === 0) {
-      console.error('Invalid assignment:', { cleaner, jobIds });
-      return;
-    }
-
-    // Optimize: Update only selected jobs to reduce computation
-    setJobs(prevJobs => {
-      const updatedJobs = [...prevJobs];
-      jobIds.forEach(jobId => {
-        const index = updatedJobs.findIndex(job => job.id === jobId);
-        if (index !== -1) {
-          updatedJobs[index] = { ...updatedJobs[index], assigned: cleaner, status: 'assigned' };
-        }
-      });
-      return updatedJobs;
-    });
-
-    // Batch state updates to minimize re-renders
+    setJobs(prevJobs => 
+      prevJobs.map(job => 
+        jobIds.includes(job.id) ? { ...job, assigned: cleaner, status: 'assigned' } : job
+      )
+    );
     setSelectedJobs(new Set());
     setShowAssignModal(false);
-    
-    // Trigger styled toast notification
-    try {
-      toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        className: 'bg-green-500 text-white font-medium rounded-lg shadow-lg p-4',
-        bodyClassName: 'flex items-center gap-2',
-        icon: <CheckCircle className="w-5 h-5" />
-      });
-      console.log('Toast triggered successfully');
-    } catch (error) {
-      console.error('Toast error:', error);
-    }
+    // Toast notification for assignment confirmation
+    toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
   }, [selectedJobs]);
 
   const printJobs = useCallback((jobIds = []) => {
@@ -374,9 +351,9 @@ Linen: ${job.linenInstructions}` :
   };
 
   // PERFORMANCE FIX 5: Memoized JobCard component
-  const JobCard = React.memo(({ job, isSelected, onSelect }) => (
-    <div className={`
-      bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer
+  const JobCard = React.memo(({ job, isSelected, onSelect, style }) => (
+    <div style={style} className={`
+      relative bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer mx-2
       ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}
       ${job.priority === 'high' ? 'ring-2 ring-red-300' : ''}
     `}>
@@ -494,6 +471,20 @@ Linen: ${job.linenInstructions}` :
     </div>
   ));
 
+  // PERFORMANCE FIX 6: Virtualization for job list
+  const Row = ({ index, style }) => {
+    const job = filteredJobs[index];
+    return (
+      <JobCard
+        key={job.id}
+        job={job}
+        isSelected={selectedJobs.has(job.id)}
+        onSelect={handleJobSelect}
+        style={style}
+      />
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Toast Container */}
@@ -507,7 +498,6 @@ Linen: ${job.linenInstructions}` :
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        className="z-[100]"
       />
 
       {/* Header */}
@@ -678,19 +668,18 @@ Linen: ${job.linenInstructions}` :
           )}
         </div>
 
-        {/* Job List - Multi-Column Grid */}
+        {/* PERFORMANCE FIX 7: Virtualized Job List */}
         <div className="bg-white rounded-xl shadow-md p-4">
           {filteredJobs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredJobs.map(job => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  isSelected={selectedJobs.has(job.id)}
-                  onSelect={handleJobSelect}
-                />
-              ))}
-            </div>
+            <FixedSizeList
+              height={600}
+              width="100%"
+              itemCount={filteredJobs.length}
+              itemSize={280}
+              className="overflow-auto"
+            >
+              {Row}
+            </FixedSizeList>
           ) : (
             <div className="text-center py-12">
               <div className="text-gray-500 text-xl mb-2">No jobs found</div>
@@ -776,17 +765,17 @@ Linen: ${job.linenInstructions}` :
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">Cleaning Instructions</h3>
                     <div className="space-y-2 text-sm">
-                      <div><strong>Standard:</strong> ${showJobDetail.permanentInstructions}</div>
-                      <div><strong>This Week:</strong> ${showJobDetail.weekSpecificInstructions}</div>
-                      <div><strong>Linen:</strong> ${showJobDetail.linenInstructions}</div>
+                      <div><strong>Standard:</strong> {showJobDetail.permanentInstructions}</div>
+                      <div><strong>This Week:</strong> {showJobDetail.weekSpecificInstructions}</div>
+                      <div><strong>Linen:</strong> {showJobDetail.linenInstructions}</div>
                     </div>
                   </div>
 
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">Parking</h3>
                     <div className="space-y-2 text-sm">
-                      <div><strong>Space:</strong> ${showJobDetail.parkingSpace}</div>
-                      <div><strong>Instructions:</strong> ${showJobDetail.parkingInstructions}</div>
+                      <div><strong>Space:</strong> {showJobDetail.parkingSpace}</div>
+                      <div><strong>Instructions:</strong> {showJobDetail.parkingInstructions}</div>
                     </div>
                   </div>
 
@@ -796,25 +785,25 @@ Linen: ${job.linenInstructions}` :
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <CheckCircle className="w-5 h-5 text-green-600" />
-                          <span className="font-medium">${showJobDetail.assigned.name}</span>
+                          <span className="font-medium">{showJobDetail.assigned.name}</span>
                         </div>
                         <div className="text-sm text-green-700">
-                          <div>${showJobDetail.assigned.team}</div>
+                          <div>{showJobDetail.assigned.team}</div>
                           <div className="flex items-center gap-2 mt-1">
                             <Phone className="w-4 h-4" />
-                            ${showJobDetail.assigned.phone}
+                            {showJobDetail.assigned.phone}
                           </div>
                           <div className="flex items-center gap-2">
                             <Mail className="w-4 h-4" />
-                            ${showJobDetail.assigned.email}
+                            {showJobDetail.assigned.email}
                           </div>
                         </div>
                         <div className="flex items-center gap-1 text-yellow-500 mt-2">
-                          ${[...Array(Math.floor(showJobDetail.assigned.rating))].map((_, i) => (
-                            `<Star key=${i} className="w-4 h-4 fill-current" />`
-                          )).join('')}
+                          {[...Array(Math.floor(showJobDetail.assigned.rating))].map((_, i) => (
+                            <Star key={i} className="w-4 h-4 fill-current" />
+                          ))}
                           <span className="text-sm text-gray-600 ml-1">
-                            (${showJobDetail.assigned.rating.toFixed(1)})
+                            ({showJobDetail.assigned.rating.toFixed(1)})
                           </span>
                         </div>
                       </div>
@@ -869,7 +858,7 @@ Linen: ${job.linenInstructions}` :
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Assign Jobs (${selectedJobs.size} selected)
+                  Assign Jobs ({selectedJobs.size} selected)
                 </h2>
                 <button
                   onClick={() => setShowAssignModal(false)}
@@ -888,18 +877,18 @@ Linen: ${job.linenInstructions}` :
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-semibold text-gray-900">${cleaner.name}</div>
-                        <div className="text-sm text-gray-600">${cleaner.team}</div>
-                        <div className="text-xs text-gray-500">${cleaner.phone}</div>
+                        <div className="font-semibold text-gray-900">{cleaner.name}</div>
+                        <div className="text-sm text-gray-600">{cleaner.team}</div>
+                        <div className="text-xs text-gray-500">{cleaner.phone}</div>
                       </div>
                       <div className="text-right">
                         <div className="flex items-center gap-1 text-yellow-500">
-                          ${[...Array(Math.floor(cleaner.rating))].map((_, i) => (
-                            `<Star key=${i} className="w-3 h-3 fill-current" />`
-                          )).join('')}
+                          {[...Array(Math.floor(cleaner.rating))].map((_, i) => (
+                            <Star key={i} className="w-3 h-3 fill-current" />
+                          ))}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          ${cleaner.assignedJobs} current jobs
+                          {cleaner.assignedJobs} current jobs
                         </div>
                       </div>
                     </div>
@@ -928,8 +917,8 @@ Linen: ${job.linenInstructions}` :
 
               <div className="space-y-4">
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  <strong>To:</strong> ${showNotifyModal.assigned?.name}<br/>
-                  <strong>Job:</strong> ${showNotifyModal.location} Room ${showNotifyModal.room}
+                  <strong>To:</strong> {showNotifyModal.assigned?.name}<br/>
+                  <strong>Job:</strong> {showNotifyModal.location} Room {showNotifyModal.room}
                 </div>
 
                 <div className="space-y-3">
@@ -971,7 +960,7 @@ Linen: ${job.linenInstructions}` :
 
               <div className="space-y-4">
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  Sending to ${[...new Set(jobs.filter(job => job.assigned && selectedJobs.has(job.id)).map(job => job.assigned.id))].length} cleaners
+                  Sending to {[...new Set(jobs.filter(job => job.assigned && selectedJobs.has(job.id)).map(job => job.assigned.id))].length} cleaners
                 </div>
 
                 <textarea
@@ -1012,8 +1001,8 @@ Linen: ${job.linenInstructions}` :
 
               <div className="space-y-4">
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  <strong>Job:</strong> ${showScheduleModal.location} Room ${showScheduleModal.room}<br/>
-                  <strong>Cleaner:</strong> ${showScheduleModal.assigned?.name}
+                  <strong>Job:</strong> {showScheduleModal.location} Room {showScheduleModal.room}<br/>
+                  <strong>Cleaner:</strong> {showScheduleModal.assigned?.name}
                 </div>
 
                 <div>
