@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { FixedSizeList } from 'react-window';
 import { debounce } from 'lodash';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
 
 // Static data generation (unchanged)
@@ -125,43 +123,13 @@ const ModernCleaningSystem = () => {
     const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
     const jobIds = Array.from(selectedJobs);
     
-    console.log('Assigning jobs:', { cleanerId, jobIds }); // Debug log
-    
-    if (!cleaner || jobIds.length === 0) {
-      console.error('Invalid assignment:', { cleaner, jobIds });
-      return;
-    }
-
-    // Optimize: Update only selected jobs to reduce computation
-    setJobs(prevJobs => {
-      const updatedJobs = [...prevJobs];
-      jobIds.forEach(jobId => {
-        const index = updatedJobs.findIndex(job => job.id === jobId);
-        if (index !== -1) {
-          updatedJobs[index] = { ...updatedJobs[index], assigned: cleaner, status: 'assigned' };
-        }
-      });
-      return updatedJobs;
-    });
-
-    // Batch state updates to minimize re-renders
+    setJobs(prevJobs => 
+      prevJobs.map(job => 
+        jobIds.includes(job.id) ? { ...job, assigned: cleaner, status: 'assigned' } : job
+      )
+    );
     setSelectedJobs(new Set());
     setShowAssignModal(false);
-    
-    // Trigger toast notification
-    try {
-      toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-      console.log('Toast triggered successfully');
-    } catch (error) {
-      console.error('Toast error:', error);
-    }
   }, [selectedJobs]);
 
   const printJobs = useCallback((jobIds = []) => {
@@ -323,10 +291,10 @@ Linen: ${job.linenInstructions}` :
           
           <div class="section">
             <div class="label"><span class="emoji">🕐</span>Schedule:</div>
-            <div className="value">Start Time: ${job.startTime}</div>
-            <div className="value">Due Time: ${job.dueTime}</div>
-            <div className="value">Estimated Duration: ${job.predictedTime}</div>
-            <div className="value">Date: ${new Date(job.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            <div class="value">Start Time: ${job.startTime}</div>
+            <div class="value">Due Time: ${job.dueTime}</div>
+            <div class="value">Estimated Duration: ${job.predictedTime}</div>
+            <div class="value">Date: ${new Date(job.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
           </div>
           
           <div class="section">
@@ -508,20 +476,6 @@ Linen: ${job.linenInstructions}` :
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Toast Container */}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        className="z-[100]"
-      />
-
       {/* Header */}
       <div className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4">
