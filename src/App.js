@@ -125,8 +125,6 @@ const ModernCleaningSystem = () => {
     const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
     const jobIds = Array.from(selectedJobs);
     
-    console.log('Assigning jobs:', { cleanerId, jobIds }); // Debug log
-    
     setJobs(prevJobs => 
       prevJobs.map(job => 
         jobIds.includes(job.id) ? { ...job, assigned: cleaner, status: 'assigned' } : job
@@ -134,21 +132,15 @@ const ModernCleaningSystem = () => {
     );
     setSelectedJobs(new Set());
     setShowAssignModal(false);
-    
-    // Trigger toast notification
-    try {
-      toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-      console.log('Toast triggered successfully');
-    } catch (error) {
-      console.error('Toast error:', error);
-    }
+    // Toast notification for assignment confirmation
+    toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
   }, [selectedJobs]);
 
   const printJobs = useCallback((jobIds = []) => {
@@ -506,7 +498,6 @@ Linen: ${job.linenInstructions}` :
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        className="z-[100]"
       />
 
       {/* Header */}
