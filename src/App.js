@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, Settings, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
+import { FixedSizeList } from 'react-window';
+import { debounce } from 'lodash';
+import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
 
-// PERFORMANCE FIX 1: Move data generation outside component and make it static
+// Static data generation (unchanged)
 const FAKE_DATA = (() => {
   const locations = ['Downtown Hotel', 'Riverside Inn', 'City Center Lodge', 'Park View Resort', 'Marina Hotel'];
   const roomTypes = ['Standard Room', 'Deluxe Suite', 'Presidential Suite', 'Studio Apartment'];
@@ -17,7 +19,6 @@ const FAKE_DATA = (() => {
     rating: 4 + Math.random()
   }));
 
-  // Keep original data size but generate once
   const jobs = Array.from({ length: 500 }, (_, i) => {
     const startHour = 8 + Math.floor(Math.random() * 8);
     const duration = 1 + Math.floor(Math.random() * 3);
@@ -69,10 +70,15 @@ const ModernCleaningSystem = () => {
   const [showBulkSMSModal, setShowBulkSMSModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [currentView, setCurrentView] = useState('grid');
   const [bulkSMSMessage, setBulkSMSMessage] = useState('');
 
-  // PERFORMANCE FIX: Optimize filtered jobs with better dependencies
+  // PERFORMANCE FIX 1: Debounce search input
+  const debouncedSetSearchTerm = useCallback(
+    debounce((value) => setSearchTerm(value), 300),
+    []
+  );
+
+  // PERFORMANCE FIX 2: Optimized filtered jobs
   const filteredJobs = useMemo(() => {
     return jobs.filter(job => {
       const matchesSearch = job.room.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -88,6 +94,7 @@ const ModernCleaningSystem = () => {
     });
   }, [jobs, searchTerm, filters]);
 
+  // PERFORMANCE FIX 3: Memoized stats
   const stats = useMemo(() => {
     const total = jobs.length;
     const unassigned = jobs.filter(job => !job.assigned).length;
@@ -99,7 +106,7 @@ const ModernCleaningSystem = () => {
     return { total, unassigned, assigned, printed, availableCleaners, scheduled };
   }, [jobs]);
 
-  // PERFORMANCE FIX: Use useCallback for event handlers
+  // PERFORMANCE FIX 4: Memoized event handlers
   const handleJobSelect = useCallback((jobId, isSelected) => {
     setSelectedJobs(prev => {
       const newSelected = new Set(prev);
@@ -134,7 +141,6 @@ const ModernCleaningSystem = () => {
       printWindow.document.write(generatePrintTemplate(job));
       printWindow.document.close();
       
-      // Show print preview
       setTimeout(() => {
         printWindow.print();
       }, 500);
@@ -184,7 +190,6 @@ Linen: ${job.linenInstructions}` :
     
     uniqueCleaners.forEach(cleanerId => {
       const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
-      const cleanerJobs = assignedJobs.filter(job => job.assigned.id === cleanerId);
       console.log(`SMS to ${cleaner.name}:`, bulkSMSMessage);
     });
     
@@ -334,15 +339,14 @@ Linen: ${job.linenInstructions}` :
     `;
   };
 
-  // PERFORMANCE FIX: Memoize JobCard component
-  const JobCard = React.memo(({ job, isSelected, onSelect }) => (
-    <div className={`
-      relative bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer
+  // PERFORMANCE FIX 5: Memoized JobCard component
+  const JobCard = React.memo(({ job, isSelected, onSelect, style }) => (
+    <div style={style} className={`
+      relative bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer mx-2
       ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}
       ${job.priority === 'high' ? 'ring-2 ring-red-300' : ''}
     `}>
       <div className="p-4">
-        {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-3">
             <input
@@ -377,7 +381,6 @@ Linen: ${job.linenInstructions}` :
           </div>
         </div>
 
-        {/* Location & time */}
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2 text-gray-700">
             <MapPin className="w-4 h-4 text-blue-600" />
@@ -393,7 +396,6 @@ Linen: ${job.linenInstructions}` :
           </div>
         </div>
 
-        {/* Status */}
         <div className="mb-4">
           {job.assigned ? (
             <div className="flex items-center gap-2 bg-green-50 p-2 rounded-lg border border-green-200">
@@ -416,7 +418,6 @@ Linen: ${job.linenInstructions}` :
           )}
         </div>
         
-        {/* Action buttons */}
         <div className="flex gap-2">
           <button
             onClick={(e) => {
@@ -458,6 +459,20 @@ Linen: ${job.linenInstructions}` :
       </div>
     </div>
   ));
+
+  // PERFORMANCE FIX 6: Virtualization for job list
+  const Row = ({ index, style }) => {
+    const job = filteredJobs[index];
+    return (
+      <JobCard
+        key={job.id}
+        job={job}
+        isSelected={selectedJobs.has(job.id)}
+        onSelect={handleJobSelect}
+        style={style}
+      />
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -548,19 +563,16 @@ Linen: ${job.linenInstructions}` :
         {/* Controls */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search by room number or location..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => debouncedSetSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
-            {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 font-medium"
@@ -570,7 +582,6 @@ Linen: ${job.linenInstructions}` :
               {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
 
-            {/* Bulk Actions */}
             {selectedJobs.size > 0 && (
               <div className="flex gap-2">
                 <button
@@ -591,7 +602,6 @@ Linen: ${job.linenInstructions}` :
             )}
           </div>
 
-          {/* Filters Panel */}
           {showFilters && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -634,24 +644,25 @@ Linen: ${job.linenInstructions}` :
           )}
         </div>
 
-        {/* Jobs Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredJobs.map(job => (
-            <JobCard
-              key={job.id}
-              job={job}
-              isSelected={selectedJobs.has(job.id)}
-              onSelect={handleJobSelect}
-            />
-          ))}
+        {/* PERFORMANCE FIX 7: Virtualized Job List */}
+        <div className="bg-white rounded-xl shadow-md p-4">
+          {filteredJobs.length > 0 ? (
+            <FixedSizeList
+              height={600}
+              width="100%"
+              itemCount={filteredJobs.length}
+              itemSize={280}
+              className="overflow-auto"
+            >
+              {Row}
+            </FixedSizeList>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-gray-500 text-xl mb-2">No jobs found</div>
+              <div className="text-gray-400">Try adjusting your search or filters</div>
+            </div>
+          )}
         </div>
-
-        {filteredJobs.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 text-xl mb-2">No jobs found</div>
-            <div className="text-gray-400">Try adjusting your search or filters</div>
-          </div>
-        )}
       </div>
 
       {/* Job Detail Modal */}
@@ -675,7 +686,6 @@ Linen: ${job.linenInstructions}` :
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Basic Info */}
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">Schedule</h3>
@@ -727,7 +737,6 @@ Linen: ${job.linenInstructions}` :
                   </div>
                 </div>
 
-                {/* Instructions & Assignment */}
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">Cleaning Instructions</h3>
@@ -786,7 +795,6 @@ Linen: ${job.linenInstructions}` :
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
                 {showJobDetail.assigned && (
                   <>
