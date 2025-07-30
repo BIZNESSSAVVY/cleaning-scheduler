@@ -125,22 +125,43 @@ const ModernCleaningSystem = () => {
     const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
     const jobIds = Array.from(selectedJobs);
     
-    setJobs(prevJobs => 
-      prevJobs.map(job => 
-        jobIds.includes(job.id) ? { ...job, assigned: cleaner, status: 'assigned' } : job
-      )
-    );
+    console.log('Assigning jobs:', { cleanerId, jobIds }); // Debug log
+    
+    if (!cleaner || jobIds.length === 0) {
+      console.error('Invalid assignment:', { cleaner, jobIds });
+      return;
+    }
+
+    // Optimize: Update only selected jobs to reduce computation
+    setJobs(prevJobs => {
+      const updatedJobs = [...prevJobs];
+      jobIds.forEach(jobId => {
+        const index = updatedJobs.findIndex(job => job.id === jobId);
+        if (index !== -1) {
+          updatedJobs[index] = { ...updatedJobs[index], assigned: cleaner, status: 'assigned' };
+        }
+      });
+      return updatedJobs;
+    });
+
+    // Batch state updates to minimize re-renders
     setSelectedJobs(new Set());
     setShowAssignModal(false);
-    // Toast notification for assignment confirmation
-    toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
-      position: 'top-right',
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-    });
+    
+    // Trigger toast notification
+    try {
+      toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      console.log('Toast triggered successfully');
+    } catch (error) {
+      console.error('Toast error:', error);
+    }
   }, [selectedJobs]);
 
   const printJobs = useCallback((jobIds = []) => {
@@ -302,10 +323,10 @@ Linen: ${job.linenInstructions}` :
           
           <div class="section">
             <div class="label"><span class="emoji">🕐</span>Schedule:</div>
-            <div class="value">Start Time: ${job.startTime}</div>
-            <div class="value">Due Time: ${job.dueTime}</div>
-            <div class="value">Estimated Duration: ${job.predictedTime}</div>
-            <div class="value">Date: ${new Date(job.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            <div className="value">Start Time: ${job.startTime}</div>
+            <div className="value">Due Time: ${job.dueTime}</div>
+            <div className="value">Estimated Duration: ${job.predictedTime}</div>
+            <div className="value">Date: ${new Date(job.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
           </div>
           
           <div class="section">
@@ -498,6 +519,7 @@ Linen: ${job.linenInstructions}` :
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        className="z-[100]"
       />
 
       {/* Header */}
