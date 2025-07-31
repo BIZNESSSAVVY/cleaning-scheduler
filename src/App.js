@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { debounce } from 'lodash';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -74,64 +74,42 @@ const ModernCleaningSystem = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [bulkSMSMessage, setBulkSMSMessage] = useState('');
 
-  // Use ref to track jobs by ID for faster lookups
-  const jobsMapRef = useRef(new Map());
-  
-  // Update jobs map when jobs change
-  React.useEffect(() => {
-    jobsMapRef.current = new Map(jobs.map(job => [job.id, job]));
-  }, [jobs]);
-
-  // PERFORMANCE FIX 1: Debounce search input with shorter delay
+  // PERFORMANCE FIX 1: Debounce search input
   const debouncedSetSearchTerm = useCallback(
-    debounce((value) => setSearchTerm(value), 150),
+    debounce((value) => setSearchTerm(value), 300),
     []
   );
 
-  // PERFORMANCE FIX 2: Optimized filtered jobs with better memoization
+  // PERFORMANCE FIX 2: Optimized filtered jobs
   const filteredJobs = useMemo(() => {
-    if (!searchTerm && !filters.location && !filters.date && (!filters.status || filters.status === 'all') && !filters.cleaner) {
-      return jobs.filter(job => {
-        if (filters.status === 'unassigned') return !job.assigned;
-        if (filters.status === 'assigned') return job.assigned;
-        return true;
-      });
-    }
-
-    const searchLower = searchTerm.toLowerCase();
     return jobs.filter(job => {
-      if (searchTerm && !(job.room.toLowerCase().includes(searchLower) || job.location.toLowerCase().includes(searchLower))) {
-        return false;
-      }
-      if (filters.location && job.location !== filters.location) return false;
-      if (filters.date && job.date !== filters.date) return false;
-      if (filters.status && filters.status !== 'all') {
-        if (filters.status === 'unassigned' && job.assigned) return false;
-        if (filters.status === 'assigned' && !job.assigned) return false;
-      }
-      if (filters.cleaner && (!job.assigned || job.assigned.id !== Number(filters.cleaner))) return false;
-      return true;
+      const matchesSearch = job.room.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          job.location.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesLocation = !filters.location || job.location === filters.location;
+      const matchesDate = !filters.date || job.date === filters.date;
+      const matchesStatus = !filters.status || 
+        (filters.status === 'unassigned' && !job.assigned) ||
+        (filters.status === 'assigned' && job.assigned) ||
+        (filters.status === 'all');
+      const matchesCleaner = !filters.cleaner || (job.assigned && job.assigned.id === Number(filters.cleaner));
+      
+      return matchesSearch && matchesLocation && matchesDate && matchesStatus && matchesCleaner;
     });
   }, [jobs, searchTerm, filters]);
 
-  // PERFORMANCE FIX 3: Memoized stats with better calculation
+  // PERFORMANCE FIX 3: Memoized stats
   const stats = useMemo(() => {
-    let total = 0, unassigned = 0, assigned = 0, printed = 0, scheduled = 0;
-    
-    for (const job of jobs) {
-      total++;
-      if (!job.assigned) unassigned++;
-      else assigned++;
-      if (job.status === 'printed') printed++;
-      if (job.scheduledNotification) scheduled++;
-    }
-    
+    const total = jobs.length;
+    const unassigned = jobs.filter(job => !job.assigned).length;
+    const assigned = jobs.filter(job => job.assigned).length;
+    const printed = jobs.filter(job => job.status === 'printed').length;
     const availableCleaners = FAKE_DATA.cleaners.filter(cleaner => cleaner.available).length;
+    const scheduled = jobs.filter(job => job.scheduledNotification).length;
     
     return { total, unassigned, assigned, printed, availableCleaners, scheduled };
   }, [jobs]);
 
-  // PERFORMANCE FIX 4: Ultra-fast job selection with immediate state update
+  // PERFORMANCE FIX 4: Memoized event handlers
   const handleJobSelect = useCallback((jobId, isSelected) => {
     setSelectedJobs(prev => {
       const newSelected = new Set(prev);
@@ -144,177 +122,176 @@ const ModernCleaningSystem = () => {
     });
   }, []);
 
-  // PERFORMANCE FIX 5: Optimized job assignment with batch updates
   const assignJobs = useCallback((cleanerId) => {
     const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
     const jobIds = Array.from(selectedJobs);
     
-    if (!cleaner || jobIds.length === 0) return;
-
-    // Create jobs map for O(1) lookup
-    const jobsMap = new Map(jobs.map(job => [job.id, job]));
+    console.log('Assigning jobs:', { cleanerId, jobIds }); // Debug log
     
-    // Update jobs efficiently
-    const updatedJobs = jobs.map(job => {
-      if (jobIds.includes(job.id)) {
-        return { ...job, assigned: cleaner, status: 'assigned' };
+    if (!cleaner || jobIds.length === 0) {
+      console.error('Invalid assignment:', { cleaner, jobIds });
+      return;
+    }
+
+    // Optimize: Update only selected jobs to reduce computation
+    const updatedJobs = [...jobs];
+    jobIds.forEach(jobId => {
+      const index = updatedJobs.findIndex(job => job.id === jobId);
+      if (index !== -1) {
+        updatedJobs[index] = { ...updatedJobs[index], assigned: cleaner, status: 'assigned' };
       }
-      return job;
     });
 
-    // Batch all state updates
+    // Batch updates to minimize re-renders
     unstable_batchedUpdates(() => {
       setJobs(updatedJobs);
       setSelectedJobs(new Set());
       setShowAssignModal(false);
     });
 
-    // Show success notification
-    toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
-      position: 'top-right',
-      autoClose: 2000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      className: 'bg-green-500 text-white font-medium rounded-lg shadow-lg p-4',
-      bodyClassName: 'flex items-center gap-2',
-      icon: <CheckCircle className="w-5 h-5" />
-    });
+    // Trigger styled toast notification
+    try {
+      toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        className: 'bg-green-500 text-white font-medium rounded-lg shadow-lg p-4',
+        bodyClassName: 'flex items-center gap-2',
+        icon: <CheckCircle className="w-5 h-5" />
+      });
+      console.log('Toast triggered successfully');
+    } catch (error) {
+      console.error('Toast error:', error);
+    }
   }, [jobs, selectedJobs]);
 
-  // PERFORMANCE FIX 6: Optimized print function
   const printJobs = useCallback((jobIds = []) => {
     const ids = jobIds.length > 0 ? jobIds : Array.from(selectedJobs);
+    const jobsToPrint = jobs.filter(job => ids.includes(job.id));
     
-    if (ids.length === 0) {
+    if (jobsToPrint.length === 0) {
       toast.error('No jobs selected to print.', {
         position: 'top-right',
-        autoClose: 2000,
+        autoClose: 3000,
         className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
       });
       return;
     }
 
-    // Use jobsMapRef for faster lookup
-    const jobsToPrint = ids.map(id => jobsMapRef.current.get(id)).filter(Boolean);
+    // Combine all job templates into a single document with page breaks
+    const printWindow = window.open('', '', 'height=800,width=600');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { 
+              font-family: 'Arial', sans-serif; 
+              padding: 30px; 
+              line-height: 1.6; 
+              background: white;
+              color: #333;
+              max-width: 800px;
+              margin: 0 auto;
+            }
+            .job-page { 
+              page-break-after: always; 
+              margin-bottom: 30px; 
+            }
+            .job-page:last-child { 
+              page-break-after: auto; 
+            }
+            .header { 
+              font-size: 28px; 
+              font-weight: bold; 
+              margin-bottom: 30px; 
+              text-align: center; 
+              color: #2563EB;
+              border-bottom: 3px solid #2563EB;
+              padding-bottom: 15px;
+            }
+            .section { 
+              margin: 20px 0; 
+              padding: 15px; 
+              border-left: 5px solid #3B82F6; 
+              background: #F8FAFC;
+              border-radius: 0 8px 8px 0;
+            }
+            .label { 
+              font-weight: bold; 
+              color: #1F2937; 
+              font-size: 16px;
+              margin-bottom: 5px;
+            }
+            .value { 
+              margin-left: 15px; 
+              font-size: 15px;
+              margin-bottom: 8px;
+            }
+            .important { 
+              background: #FEF3C7; 
+              padding: 20px; 
+              border-radius: 8px; 
+              margin: 15px 0; 
+              border: 2px solid #F59E0B;
+            }
+            .contact-info {
+              background: #DBEAFE;
+              padding: 20px;
+              border-radius: 8px;
+              margin: 15px 0;
+              border: 2px solid #3B82F6;
+            }
+            .instructions {
+              background: #F0FDF4;
+              padding: 20px;
+              border-radius: 8px;
+              margin: 15px 0;
+              border: 2px solid #10B981;
+            }
+            .footer {
+              margin-top: 40px;
+              text-align: center;
+              font-size: 12px;
+              color: #6B7280;
+              border-top: 1px solid #E5E7EB;
+              padding-top: 20px;
+            }
+            .emoji { font-size: 18px; margin-right: 8px; }
+          </style>
+        </head>
+        <body>
+          ${jobsToPrint.map(job => `
+            <div class="job-page">
+              ${generatePrintTemplate(job)}
+            </div>
+          `).join('')}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
     
-    if (jobsToPrint.length === 0) return;
-
-    // Generate print content immediately without blocking
     setTimeout(() => {
-      const printWindow = window.open('', '', 'height=800,width=600');
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>
-              body { 
-                font-family: 'Arial', sans-serif; 
-                padding: 30px; 
-                line-height: 1.6; 
-                background: white;
-                color: #333;
-                max-width: 800px;
-                margin: 0 auto;
-              }
-              .job-page { 
-                page-break-after: always; 
-                margin-bottom: 30px; 
-              }
-              .job-page:last-child { 
-                page-break-after: auto; 
-              }
-              .header { 
-                font-size: 28px; 
-                font-weight: bold; 
-                margin-bottom: 30px; 
-                text-align: center; 
-                color: #2563EB;
-                border-bottom: 3px solid #2563EB;
-                padding-bottom: 15px;
-              }
-              .section { 
-                margin: 20px 0; 
-                padding: 15px; 
-                border-left: 5px solid #3B82F6; 
-                background: #F8FAFC;
-                border-radius: 0 8px 8px 0;
-              }
-              .label { 
-                font-weight: bold; 
-                color: #1F2937; 
-                font-size: 16px;
-                margin-bottom: 5px;
-              }
-              .value { 
-                margin-left: 15px; 
-                font-size: 15px;
-                margin-bottom: 8px;
-              }
-              .important { 
-                background: #FEF3C7; 
-                padding: 20px; 
-                border-radius: 8px; 
-                margin: 15px 0; 
-                border: 2px solid #F59E0B;
-              }
-              .contact-info {
-                background: #DBEAFE;
-                padding: 20px;
-                border-radius: 8px;
-                margin: 15px 0;
-                border: 2px solid #3B82F6;
-              }
-              .instructions {
-                background: #F0FDF4;
-                padding: 20px;
-                border-radius: 8px;
-                margin: 15px 0;
-                border: 2px solid #10B981;
-              }
-              .footer {
-                margin-top: 40px;
-                text-align: center;
-                font-size: 12px;
-                color: #6B7280;
-                border-top: 1px solid #E5E7EB;
-                padding-top: 20px;
-              }
-              .emoji { font-size: 18px; margin-right: 8px; }
-            </style>
-          </head>
-          <body>
-            ${jobsToPrint.map(job => `
-              <div class="job-page">
-                ${generatePrintTemplate(job)}
-              </div>
-            `).join('')}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      
-      setTimeout(() => {
-        printWindow.print();
-      }, 100);
-    }, 0);
+      printWindow.print();
+    }, 500);
     
-    // Update job status immediately
     setJobs(prevJobs => 
       prevJobs.map(job => 
         ids.includes(job.id) ? { ...job, status: 'printed' } : job
       )
     );
     setSelectedJobs(new Set());
-  }, [selectedJobs]);
+  }, [jobs, selectedJobs]);
 
   const printJobsForCleaner = useCallback(() => {
     const cleanerId = Number(filters.cleaner);
     if (!cleanerId) {
       toast.error('Please select a cleaner to print jobs.', {
         position: 'top-right',
-        autoClose: 2000,
+        autoClose: 3000,
         className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
       });
       return;
@@ -323,7 +300,7 @@ const ModernCleaningSystem = () => {
     if (cleanerJobs.length === 0) {
       toast.info('No jobs assigned to this cleaner.', {
         position: 'top-right',
-        autoClose: 2000,
+        autoClose: 3000,
         className: 'bg-blue-500 text-white font-medium rounded-lg shadow-lg p-4',
       });
       return;
@@ -388,7 +365,7 @@ Linen: ${job.linenInstructions}` :
       </div>
 
       <div class="contact-info">
-        <div class="label"><span class="emoji">👤</span>Property Manager:</div>
+        <div class schoen="label"><span class="emoji">👤</span>Property Manager:</div>
         <div class="value">${job.unitManagerName}</div>
         <div class="value">📞 (443) 953-6024</div>
       </div>
@@ -441,152 +418,133 @@ Linen: ${job.linenInstructions}` :
     `;
   };
 
-  // PERFORMANCE FIX 7: Ultra-optimized JobCard with better memoization
-  const JobCard = React.memo(({ job, isSelected, onSelect }) => {
-    // Use direct click handler to avoid event propagation issues
-    const handleCheckboxChange = useCallback((e) => {
-      e.stopPropagation();
-      onSelect(job.id, e.target.checked);
-    }, [job.id, onSelect]);
-
-    const handleViewClick = useCallback((e) => {
-      e.stopPropagation();
-      setShowJobDetail(job);
-    }, [job]);
-
-    const handlePrintClick = useCallback((e) => {
-      e.stopPropagation();
-      printJobs([job.id]);
-    }, [job.id]);
-
-    const handleNotifyClick = useCallback((e) => {
-      e.stopPropagation();
-      setShowNotifyModal(job);
-    }, [job]);
-
-    return (
-      <div className={`
-        bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer
-        ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}
-        ${job.priority === 'high' ? 'ring-2 ring-red-300' : ''}
-      `}>
-        <div className="p-4">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={handleCheckboxChange}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <div>
-                <div className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  Room {job.room}
-                  {job.scheduledNotification && (
-                    <Calendar className="w-4 h-4 text-purple-600" title="Notification Scheduled" />
-                  )}
-                </div>
-                <div className="text-sm text-gray-600">{job.roomType}</div>
+  // PERFORMANCE FIX 5: Memoized JobCard component
+  const JobCard = React.memo(({ job, isSelected, onSelect }) => (
+    <div className={`
+      bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer
+      ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}
+      ${job.priority === 'high' ? 'ring-2 ring-red-300' : ''}
+    `}>
+      <div className="p-4">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={(e) => onSelect(job.id, e.target.checked)}
+              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div>
+              <div className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                Room {job.room}
+                {job.scheduledNotification && (
+                  <Calendar className="w-4 h-4 text-purple-600" title="Notification Scheduled" />
+                )}
               </div>
+              <div className="text-sm text-gray-600">{job.roomType}</div>
             </div>
-            
-            <div className="flex items-center gap-2">
-              {job.priority === 'high' && (
-                <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                  <Zap className="w-3 h-3" />
-                  URGENT
-                </div>
-              )}
-              <div className="flex gap-1">
-                {job.wifiIncluded && <Wifi className="w-4 h-4 text-blue-600" title="WiFi Included" />}
-                {job.linenPickup && <Package className="w-4 h-4 text-orange-600" title="Linen Pickup Required" />}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center gap-2 text-gray-700">
-              <MapPin className="w-4 h-4 text-blue-600" />
-              <span className="font-medium">{job.location}</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-              <Clock className="w-4 h-4 text-green-600" />
-              <span>{job.startTime} - {job.dueTime} ({job.predictedTime})</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-              <Users className="w-4 h-4 text-purple-600" />
-              <span>{job.guestCount} guests{job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span>
-            </div>
-          </div>
-
-          <div className="mb-4">
-            {job.assigned ? (
-              <div className="flex items-center gap-2 bg-green-50 p-2 rounded-lg border border-green-200">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <div className="flex-1">
-                  <div className="font-medium text-green-800">{job.assigned.name}</div>
-                  <div className="text-sm text-green-600">{job.assigned.team}</div>
-                </div>
-                <div className="flex items-center gap-1 text-yellow-500">
-                  {[...Array(Math.floor(job.assigned.rating))].map((_, i) => (
-                    <Star key={i} className="w-3 h-3 fill-current" />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
-                <AlertCircle className="w-4 h-4 text-yellow-600" />
-                <span className="font-medium text-yellow-800">Awaiting Assignment</span>
-              </div>
-            )}
           </div>
           
-          <div className="flex gap-2">
-            <button
-              onClick={handleViewClick}
-              className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-1"
-            >
-              <Eye className="w-4 h-4" />
-              <span className="hidden sm:inline">View</span>
-            </button>
-            
-            {job.assigned && (
-              <>
-                <button
-                  onClick={handlePrintClick}
-                  className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-1"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span className="hidden sm:inline">Print</span>
-                </button>
-                
-                <button
-                  onClick={handleNotifyClick}
-                  className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-1"
-                >
-                  <Bell className="w-4 h-4" />
-                  <span className="hidden sm:inline">Notify</span>
-                </button>
-              </>
+          <div className="flex items-center gap-2">
+            {job.priority === 'high' && (
+              <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                <Zap className="w-3 h-3" />
+                URGENT
+              </div>
             )}
+            <div className="flex gap-1">
+              {job.wifiIncluded && <Wifi className="w-4 h-4 text-blue-600" title="WiFi Included" />}
+              {job.linenPickup && <Package className="w-4 h-4 text-orange-600" title="Linen Pickup Required" />}
+            </div>
           </div>
         </div>
+
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-2 text-gray-700">
+            <MapPin className="w-4 h-4 text-blue-600" />
+            <span className="font-medium">{job.location}</span>
+          </div>
+          <div className="flex items-center gap-2 text-gray-700">
+            <Clock className="w-4 h-4 text-green-600" />
+            <span>{job.startTime} - {job.dueTime} ({job.predictedTime})</span>
+          </div>
+          <div className="flex items-center gap-2 text-gray-700">
+            <Users className="w-4 h-4 text-purple-600" />
+            <span>{job.guestCount} guests{job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          {job.assigned ? (
+            <div className="flex items-center gap-2 bg-green-50 p-2 rounded-lg border border-green-200">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <div className="flex-1">
+                <div className="font-medium text-green-800">{job.assigned.name}</div>
+                <div className="text-sm text-green-600">{job.assigned.team}</div>
+              </div>
+              <div className="flex items-center gap-1 text-yellow-500">
+                {[...Array(Math.floor(job.assigned.rating))].map((_, i) => (
+                  <Star key={i} className="w-3 h-3 fill-current" />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
+              <AlertCircle className="w-4 h-4 text-yellow-600" />
+              <span className="font-medium text-yellow-800">Awaiting Assignment</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowJobDetail(job);
+            }}
+            className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-1"
+          >
+            <Eye className="w-4 h-4" />
+            <span className="hidden sm:inline">View</span>
+          </button>
+          
+          {job.assigned && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  printJobs([job.id]);
+                }}
+                className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-1"
+              >
+                <Printer className="w-4 h-4" />
+                <span className="hidden sm:inline">Print</span>
+              </button>
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowNotifyModal(job);
+                }}
+                className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-1"
+              >
+                <Bell className="w-4 h-4" />
+                <span className="hidden sm:inline">Notify</span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
-    );
-  }, (prevProps, nextProps) => {
-    // Custom comparison for better performance
-    return prevProps.job.id === nextProps.job.id && 
-           prevProps.isSelected === nextProps.isSelected &&
-           prevProps.job.assigned?.id === nextProps.job.assigned?.id &&
-           prevProps.job.status === nextProps.job.status;
-  });
+    </div>
+  ));
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Toast Container */}
       <ToastContainer
         position="top-right"
-        autoClose={2000}
+        autoClose={3000}
         hideProgressBar={false}
         newestOnTop={false}
         closeOnClick
