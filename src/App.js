@@ -1,7 +1,11 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, Settings, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
+import { debounce } from 'lodash';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { unstable_batchedUpdates } from 'react-dom';
+import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
 
-// PERFORMANCE FIX 1: Move data generation outside component and make it static
+// Static data generation (unchanged)
 const FAKE_DATA = (() => {
   const locations = ['Downtown Hotel', 'Riverside Inn', 'City Center Lodge', 'Park View Resort', 'Marina Hotel'];
   const roomTypes = ['Standard Room', 'Deluxe Suite', 'Presidential Suite', 'Studio Apartment'];
@@ -17,7 +21,6 @@ const FAKE_DATA = (() => {
     rating: 4 + Math.random()
   }));
 
-  // Keep original data size but generate once
   const jobs = Array.from({ length: 500 }, (_, i) => {
     const startHour = 8 + Math.floor(Math.random() * 8);
     const duration = 1 + Math.floor(Math.random() * 3);
@@ -62,17 +65,22 @@ const ModernCleaningSystem = () => {
   const [jobs, setJobs] = useState(FAKE_DATA.jobs);
   const [selectedJobs, setSelectedJobs] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({ location: '', date: '', status: 'unassigned' });
+  const [filters, setFilters] = useState({ location: '', date: '', status: 'unassigned', cleaner: '' });
   const [showJobDetail, setShowJobDetail] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showNotifyModal, setShowNotifyModal] = useState(null);
   const [showBulkSMSModal, setShowBulkSMSModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [currentView, setCurrentView] = useState('grid');
   const [bulkSMSMessage, setBulkSMSMessage] = useState('');
 
-  // PERFORMANCE FIX: Optimize filtered jobs with better dependencies
+  // PERFORMANCE FIX 1: Debounce search input
+  const debouncedSetSearchTerm = useCallback(
+    debounce((value) => setSearchTerm(value), 300),
+    []
+  );
+
+  // PERFORMANCE FIX 2: Optimized filtered jobs
   const filteredJobs = useMemo(() => {
     return jobs.filter(job => {
       const matchesSearch = job.room.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -83,11 +91,13 @@ const ModernCleaningSystem = () => {
         (filters.status === 'unassigned' && !job.assigned) ||
         (filters.status === 'assigned' && job.assigned) ||
         (filters.status === 'all');
+      const matchesCleaner = !filters.cleaner || (job.assigned && job.assigned.id === Number(filters.cleaner));
       
-      return matchesSearch && matchesLocation && matchesDate && matchesStatus;
+      return matchesSearch && matchesLocation && matchesDate && matchesStatus && matchesCleaner;
     });
   }, [jobs, searchTerm, filters]);
 
+  // PERFORMANCE FIX 3: Memoized stats
   const stats = useMemo(() => {
     const total = jobs.length;
     const unassigned = jobs.filter(job => !job.assigned).length;
@@ -99,7 +109,7 @@ const ModernCleaningSystem = () => {
     return { total, unassigned, assigned, printed, availableCleaners, scheduled };
   }, [jobs]);
 
-  // PERFORMANCE FIX: Use useCallback for event handlers
+  // PERFORMANCE FIX 4: Memoized event handlers
   const handleJobSelect = useCallback((jobId, isSelected) => {
     setSelectedJobs(prev => {
       const newSelected = new Set(prev);
@@ -116,14 +126,47 @@ const ModernCleaningSystem = () => {
     const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
     const jobIds = Array.from(selectedJobs);
     
-    setJobs(prevJobs => 
-      prevJobs.map(job => 
-        jobIds.includes(job.id) ? { ...job, assigned: cleaner, status: 'assigned' } : job
-      )
-    );
-    setSelectedJobs(new Set());
-    setShowAssignModal(false);
-  }, [selectedJobs]);
+    console.log('Assigning jobs:', { cleanerId, jobIds }); // Debug log
+    
+    if (!cleaner || jobIds.length === 0) {
+      console.error('Invalid assignment:', { cleaner, jobIds });
+      return;
+    }
+
+    // Optimize: Update only selected jobs to reduce computation
+    const updatedJobs = [...jobs];
+    jobIds.forEach(jobId => {
+      const index = updatedJobs.findIndex(job => job.id === jobId);
+      if (index !== -1) {
+        updatedJobs[index] = { ...updatedJobs[index], assigned: cleaner, status: 'assigned' };
+      }
+    });
+
+    // Batch updates to minimize re-renders
+    unstable_batchedUpdates(() => {
+      setJobs(updatedJobs);
+      setSelectedJobs(new Set());
+      setShowAssignModal(false);
+    });
+
+    // Trigger styled toast notification
+    try {
+      toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        className: 'bg-green-500 text-white font-medium rounded-lg shadow-lg p-4',
+        bodyClassName: 'flex items-center gap-2',
+        icon: <CheckCircle className="w-5 h-5" />
+      });
+      console.log('Toast triggered successfully');
+    } catch (error) {
+      console.error('Toast error:', error);
+    }
+  }, [jobs, selectedJobs]);
 
   const printJobs = useCallback((jobIds = []) => {
     const ids = jobIds.length > 0 ? jobIds : Array.from(selectedJobs);
@@ -134,7 +177,6 @@ const ModernCleaningSystem = () => {
       printWindow.document.write(generatePrintTemplate(job));
       printWindow.document.close();
       
-      // Show print preview
       setTimeout(() => {
         printWindow.print();
       }, 500);
@@ -146,7 +188,29 @@ const ModernCleaningSystem = () => {
       )
     );
     setSelectedJobs(new Set());
-  }, [selectedJobs, jobs]);
+  }, [jobs, selectedJobs]);
+
+  const printJobsForCleaner = useCallback(() => {
+    const cleanerId = Number(filters.cleaner);
+    if (!cleanerId) {
+      toast.error('Please select a cleaner to print jobs.', {
+        position: 'top-right',
+        autoClose: 3000,
+        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+      });
+      return;
+    }
+    const cleanerJobs = jobs.filter(job => job.assigned && job.assigned.id === cleanerId).map(job => job.id);
+    if (cleanerJobs.length === 0) {
+      toast.info('No jobs assigned to this cleaner.', {
+        position: 'top-right',
+        autoClose: 3000,
+        className: 'bg-blue-500 text-white font-medium rounded-lg shadow-lg p-4',
+      });
+      return;
+    }
+    printJobs(cleanerJobs);
+  }, [jobs, filters.cleaner, printJobs]);
 
   const sendNotification = useCallback((job, messageType = 'full') => {
     const message = messageType === 'full' ? 
@@ -184,7 +248,6 @@ Linen: ${job.linenInstructions}` :
     
     uniqueCleaners.forEach(cleanerId => {
       const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
-      const cleanerJobs = assignedJobs.filter(job => job.assigned.id === cleanerId);
       console.log(`SMS to ${cleaner.name}:`, bulkSMSMessage);
     });
     
@@ -334,15 +397,14 @@ Linen: ${job.linenInstructions}` :
     `;
   };
 
-  // PERFORMANCE FIX: Memoize JobCard component
+  // PERFORMANCE FIX 5: Memoized JobCard component
   const JobCard = React.memo(({ job, isSelected, onSelect }) => (
     <div className={`
-      relative bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer
+      bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer
       ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}
       ${job.priority === 'high' ? 'ring-2 ring-red-300' : ''}
     `}>
       <div className="p-4">
-        {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-3">
             <input
@@ -377,7 +439,6 @@ Linen: ${job.linenInstructions}` :
           </div>
         </div>
 
-        {/* Location & time */}
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2 text-gray-700">
             <MapPin className="w-4 h-4 text-blue-600" />
@@ -393,7 +454,6 @@ Linen: ${job.linenInstructions}` :
           </div>
         </div>
 
-        {/* Status */}
         <div className="mb-4">
           {job.assigned ? (
             <div className="flex items-center gap-2 bg-green-50 p-2 rounded-lg border border-green-200">
@@ -416,7 +476,6 @@ Linen: ${job.linenInstructions}` :
           )}
         </div>
         
-        {/* Action buttons */}
         <div className="flex gap-2">
           <button
             onClick={(e) => {
@@ -461,6 +520,20 @@ Linen: ${job.linenInstructions}` :
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        className="z-[1000]"
+      />
+
       {/* Header */}
       <div className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -548,19 +621,16 @@ Linen: ${job.linenInstructions}` :
         {/* Controls */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search by room number or location..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => debouncedSetSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
-            {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 font-medium"
@@ -570,31 +640,29 @@ Linen: ${job.linenInstructions}` :
               {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
 
-            {/* Bulk Actions */}
-            {selectedJobs.size > 0 && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowAssignModal(true)}
-                  className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-medium"
-                >
-                  <Users className="w-4 h-4" />
-                  Assign ({selectedJobs.size})
-                </button>
-                <button
-                  onClick={() => printJobs()}
-                  className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium"
-                >
-                  <Printer className="w-4 h-4" />
-                  Print All ({selectedJobs.size})
-                </button>
-              </div>
-            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowAssignModal(true)}
+                disabled={selectedJobs.size === 0}
+                className={`${selectedJobs.size > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 cursor-not-allowed'} text-white px-4 py-3 rounded-lg transition-colors flex items-center gap-2 font-medium`}
+              >
+                <Users className="w-4 h-4" />
+                Assign ({selectedJobs.size})
+              </button>
+              <button
+                onClick={() => filters.cleaner ? printJobsForCleaner() : printJobs()}
+                disabled={selectedJobs.size === 0 && !filters.cleaner}
+                className={`${selectedJobs.size > 0 || filters.cleaner ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white px-4 py-3 rounded-lg transition-colors flex items-center gap-2 font-medium`}
+              >
+                <Printer className="w-4 h-4" />
+                {filters.cleaner ? 'Print Cleaner Jobs' : `Print All (${selectedJobs.size})`}
+              </button>
+            </div>
           </div>
 
-          {/* Filters Panel */}
           {showFilters && (
             <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
                   <select
@@ -629,29 +697,44 @@ Linen: ${job.linenInstructions}` :
                     <option value="assigned">Assigned</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Cleaner</label>
+                  <select
+                    value={filters.cleaner}
+                    onChange={(e) => setFilters({...filters, cleaner: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Cleaners</option>
+                    {FAKE_DATA.cleaners.map(cleaner => (
+                      <option key={cleaner.id} value={cleaner.id}>{cleaner.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Jobs Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredJobs.map(job => (
-            <JobCard
-              key={job.id}
-              job={job}
-              isSelected={selectedJobs.has(job.id)}
-              onSelect={handleJobSelect}
-            />
-          ))}
+        {/* Job List - Multi-Column Grid */}
+        <div className="bg-white rounded-xl shadow-md p-4">
+          {filteredJobs.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredJobs.map(job => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  isSelected={selectedJobs.has(job.id)}
+                  onSelect={handleJobSelect}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-gray-500 text-xl mb-2">No jobs found</div>
+              <div className="text-gray-400">Try adjusting your search or filters</div>
+            </div>
+          )}
         </div>
-
-        {filteredJobs.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 text-xl mb-2">No jobs found</div>
-            <div className="text-gray-400">Try adjusting your search or filters</div>
-          </div>
-        )}
       </div>
 
       {/* Job Detail Modal */}
@@ -675,7 +758,6 @@ Linen: ${job.linenInstructions}` :
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Basic Info */}
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">Schedule</h3>
@@ -727,7 +809,6 @@ Linen: ${job.linenInstructions}` :
                   </div>
                 </div>
 
-                {/* Instructions & Assignment */}
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">Cleaning Instructions</h3>
@@ -786,7 +867,6 @@ Linen: ${job.linenInstructions}` :
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
                 {showJobDetail.assigned && (
                   <>
