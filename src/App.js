@@ -172,111 +172,15 @@ const ModernCleaningSystem = () => {
     const ids = jobIds.length > 0 ? jobIds : Array.from(selectedJobs);
     const jobsToPrint = jobs.filter(job => ids.includes(job.id));
     
-    if (jobsToPrint.length === 0) {
-      toast.error('No jobs selected to print.', {
-        position: 'top-right',
-        autoClose: 3000,
-        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
-      });
-      return;
-    }
-
-    // Combine all job templates into a single document with page breaks
-    const printWindow = window.open('', '', 'height=800,width=600');
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { 
-              font-family: 'Arial', sans-serif; 
-              padding: 30px; 
-              line-height: 1.6; 
-              background: white;
-              color: #333;
-              max-width: 800px;
-              margin: 0 auto;
-            }
-            .job-page { 
-              page-break-after: always; 
-              margin-bottom: 30px; 
-            }
-            .job-page:last-child { 
-              page-break-after: auto; 
-            }
-            .header { 
-              font-size: 28px; 
-              font-weight: bold; 
-              margin-bottom: 30px; 
-              text-align: center; 
-              color: #2563EB;
-              border-bottom: 3px solid #2563EB;
-              padding-bottom: 15px;
-            }
-            .section { 
-              margin: 20px 0; 
-              padding: 15px; 
-              border-left: 5px solid #3B82F6; 
-              background: #F8FAFC;
-              border-radius: 0 8px 8px 0;
-            }
-            .label { 
-              font-weight: bold; 
-              color: #1F2937; 
-              font-size: 16px;
-              margin-bottom: 5px;
-            }
-            .value { 
-              margin-left: 15px; 
-              font-size: 15px;
-              margin-bottom: 8px;
-            }
-            .important { 
-              background: #FEF3C7; 
-              padding: 20px; 
-              border-radius: 8px; 
-              margin: 15px 0; 
-              border: 2px solid #F59E0B;
-            }
-            .contact-info {
-              background: #DBEAFE;
-              padding: 20px;
-              border-radius: 8px;
-              margin: 15px 0;
-              border: 2px solid #3B82F6;
-            }
-            .instructions {
-              background: #F0FDF4;
-              padding: 20px;
-              border-radius: 8px;
-              margin: 15px 0;
-              border: 2px solid #10B981;
-            }
-            .footer {
-              margin-top: 40px;
-              text-align: center;
-              font-size: 12px;
-              color: #6B7280;
-              border-top: 1px solid #E5E7EB;
-              padding-top: 20px;
-            }
-            .emoji { font-size: 18px; margin-right: 8px; }
-          </style>
-        </head>
-        <body>
-          ${jobsToPrint.map(job => `
-            <div class="job-page">
-              ${generatePrintTemplate(job)}
-            </div>
-          `).join('')}
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
+    jobsToPrint.forEach(job => {
+      const printWindow = window.open('', '', 'height=800,width=600');
+      printWindow.document.write(generatePrintTemplate(job));
+      printWindow.document.close();
+      
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    });
     
     setJobs(prevJobs => 
       prevJobs.map(job => 
@@ -355,66 +259,141 @@ Linen: ${job.linenInstructions}` :
 
   const generatePrintTemplate = (job) => {
     return `
-      <div class="header">
-        🏨 ${job.location} - Room ${job.room}
-      </div>
-      
-      <div class="important">
-        <div class="label"><span class="emoji">📍</span>Property Address:</div>
-        <div class="value">${job.location}<br>131 Georgia Avenue, Ocean City, MD 21842</div>
-      </div>
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { 
+              font-family: 'Arial', sans-serif; 
+              padding: 30px; 
+              line-height: 1.6; 
+              background: white;
+              color: #333;
+              max-width: 800px;
+              margin: 0 auto;
+            }
+            .header { 
+              font-size: 28px; 
+              font-weight: bold; 
+              margin-bottom: 30px; 
+              text-align: center; 
+              color: #2563EB;
+              border-bottom: 3px solid #2563EB;
+              padding-bottom: 15px;
+            }
+            .section { 
+              margin: 20px 0; 
+              padding: 15px; 
+              border-left: 5px solid #3B82F6; 
+              background: #F8FAFC;
+              border-radius: 0 8px 8px 0;
+            }
+            .label { 
+              font-weight: bold; 
+              color: #1F2937; 
+              font-size: 16px;
+              margin-bottom: 5px;
+            }
+            .value { 
+              margin-left: 15px; 
+              font-size: 15px;
+              margin-bottom: 8px;
+            }
+            .important { 
+              background: #FEF3C7; 
+              padding: 20px; 
+              border-radius: 8px; 
+              margin: 15px 0; 
+              border: 2px solid #F59E0B;
+            }
+            .contact-info {
+              background: #DBEAFE;
+              padding: 20px;
+              border-radius: 8px;
+              margin: 15px 0;
+              border: 2px solid #3B82F6;
+            }
+            .instructions {
+              background: #F0FDF4;
+              padding: 20px;
+              border-radius: 8px;
+              margin: 15px 0;
+              border: 2px solid #10B981;
+            }
+            .footer {
+              margin-top: 40px;
+              text-align: center;
+              font-size: 12px;
+              color: #6B7280;
+              border-top: 1px solid #E5E7EB;
+              padding-top: 20px;
+            }
+            .emoji { font-size: 18px; margin-right: 8px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            🏨 ${job.location} - Room ${job.room}
+          </div>
+          
+          <div class="important">
+            <div class="label"><span class="emoji">📍</span>Property Address:</div>
+            <div class="value">${job.location}<br>131 Georgia Avenue, Ocean City, MD 21842</div>
+          </div>
 
-      <div class="contact-info">
-        <div class schoen="label"><span class="emoji">👤</span>Property Manager:</div>
-        <div class="value">${job.unitManagerName}</div>
-        <div class="value">📞 (443) 953-6024</div>
-      </div>
-      
-      <div class="section">
-        <div class="label"><span class="emoji">🕐</span>Schedule:</div>
-        <div class="value">Start Time: ${job.startTime}</div>
-        <div class="value">Due Time: ${job.dueTime}</div>
-        <div class="value">Estimated Duration: ${job.predictedTime}</div>
-        <div class="value">Date: ${new Date(job.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-      </div>
-      
-      <div class="section">
-        <div class="label"><span class="emoji">🔑</span>Access Information:</div>
-        <div class="value">Lock Code: <strong>${job.lockCode}</strong></div>
-        <div class="value">Room Type: ${job.roomType}</div>
-      </div>
-      
-      <div class="section">
-        <div class="label"><span class="emoji">👥</span>Occupancy Details:</div>
-        <div class="value">Number of Guests: ${job.guestCount}</div>
-        ${job.dogCount > 0 ? `<div class="value">Dogs: ${job.dogCount}</div>` : ''}
-        <div class="value">Bed Configuration: ${job.bedInfo}</div>
-        <div class="value">Bathroom Details: ${job.bathInfo}</div>
-      </div>
-      
-      <div class="section">
-        <div class="label"><span class="emoji">📶</span>WiFi Information:</div>
-        <div class="value">Network: ${job.wifiNetwork}</div>
-        <div class="value">Password: ${job.wifiPassword}</div>
-      </div>
-      
-      <div class="section">
-        <div class="label"><span class="emoji">🚗</span>Parking Instructions:</div>
-        <div class="value">Assigned Space: ${job.parkingSpace}</div>
-        <div class="value">${job.parkingInstructions}</div>
-      </div>
-      
-      <div class="instructions">
-        <div class="label"><span class="emoji">📋</span>Cleaning Instructions:</div>
-        <div class="value"><strong>Standard Protocol:</strong> ${job.permanentInstructions}</div>
-        <div class="value"><strong>This Week Special:</strong> ${job.weekSpecificInstructions}</div>
-        <div class="value"><strong>Linen Instructions:</strong> ${job.linenInstructions}</div>
-      </div>
+          <div class="contact-info">
+            <div class="label"><span class="emoji">👤</span>Property Manager:</div>
+            <div class="value">${job.unitManagerName}</div>
+            <div class="value">📞 (443) 953-6024</div>
+          </div>
+          
+          <div class="section">
+            <div class="label"><span class="emoji">🕐</span>Schedule:</div>
+            <div class="value">Start Time: ${job.startTime}</div>
+            <div class="value">Due Time: ${job.dueTime}</div>
+            <div class="value">Estimated Duration: ${job.predictedTime}</div>
+            <div class="value">Date: ${new Date(job.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          </div>
+          
+          <div class="section">
+            <div class="label"><span class="emoji">🔑</span>Access Information:</div>
+            <div class="value">Lock Code: <strong>${job.lockCode}</strong></div>
+            <div class="value">Room Type: ${job.roomType}</div>
+          </div>
+          
+          <div class="section">
+            <div class="label"><span class="emoji">👥</span>Occupancy Details:</div>
+            <div class="value">Number of Guests: ${job.guestCount}</div>
+            ${job.dogCount > 0 ? `<div class="value">Dogs: ${job.dogCount}</div>` : ''}
+            <div class="value">Bed Configuration: ${job.bedInfo}</div>
+            <div class="value">Bathroom Details: ${job.bathInfo}</div>
+          </div>
+          
+          <div class="section">
+            <div class="label"><span class="emoji">📶</span>WiFi Information:</div>
+            <div class="value">Network: ${job.wifiNetwork}</div>
+            <div class="value">Password: ${job.wifiPassword}</div>
+          </div>
+          
+          <div class="section">
+            <div class="label"><span class="emoji">🚗</span>Parking Instructions:</div>
+            <div class="value">Assigned Space: ${job.parkingSpace}</div>
+            <div class="value">${job.parkingInstructions}</div>
+          </div>
+          
+          <div class="instructions">
+            <div class="label"><span class="emoji">📋</span>Cleaning Instructions:</div>
+            <div class="value"><strong>Standard Protocol:</strong> ${job.permanentInstructions}</div>
+            <div class="value"><strong>This Week Special:</strong> ${job.weekSpecificInstructions}</div>
+            <div class="value"><strong>Linen Instructions:</strong> ${job.linenInstructions}</div>
+          </div>
 
-      <div class="footer">
-        <p><strong>Savvy OS</strong> - Professional Cleaning Management System</p>
-        <p>Generated on ${new Date().toLocaleString()}</p>
-      </div>
+          <div class="footer">
+            <p><strong>Savvy OS</strong> - Professional Cleaning Management System</p>
+            <p>Generated on ${new Date().toLocaleString()}</p>
+          </div>
+        </body>
+      </html>
     `;
   };
 
