@@ -328,32 +328,70 @@ const printJobs = useCallback((jobIds = []) => {
     return;
   }
 
-  // Generate print template (simplified for performance)
+  // Generate print template with all requested fields
   const generatePrintTemplate = (job) => {
     return `
-      <div class="header">🏨 ${job.location} - Room ${job.room}</div>
-      <div class="section">
-        <div class="label">Schedule:</div>
-        <div class="value">Start Time: ${job.startTime}</div>
-        <div class="value">Due Time: ${job.dueTime}</div>
-        <div class="value">Date: ${new Date(job.date).toLocaleDateString()}</div>
-      </div>
-      <div class="section">
-        <div class="label">Access Information:</div>
-        <div class="value">Lock Code: <strong>${job.lockCode}</strong></div>
-        <div class="value">Room Type: ${job.roomType}</div>
-      </div>
-      ${job.assigned ? `
-        <div class="section">
-          <div class="label">Assigned Cleaner:</div>
-          <div class="value">Name: ${job.assigned.name}</div>
-          <div class="value">Team: ${job.assigned.team}</div>
-          <div class="value">Cleaner Schedule:</div>
-          <div class="value">Availability: ${job.assigned.available ? 'Available' : 'Not Available'}</div>
-          <div class="value">Current Assigned Jobs: ${job.assigned.assignedJobs}</div>
-        </div>
-      ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
-    `;  // End of template
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 30px; }
+            .header { font-size: 28px; font-weight: bold; margin-bottom: 30px; }
+            .section { margin: 20px 0; padding: 15px; border-left: 5px solid #3B82F6; }
+            .label { font-weight: bold; margin-bottom: 5px; }
+            .value { margin-left: 15px; margin-bottom: 8px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">🏨 ${job.location} - Room ${job.room}</div>
+          <div class="section">
+            <div class="label">Room Type:</div>
+            <div class="value">${job.roomType}</div>
+          </div>
+          <div class="section">
+            <div class="label">Schedule:</div>
+            <div class="value">Date: ${new Date(job.date).toLocaleDateString()}</div>
+            <div class="value">Time: ${job.startTime} - ${job.dueTime}</div>
+            <div class="value">Guests: ${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</div>
+          </div>
+          <div class="section">
+            <div class="label">Property Details:</div>
+            <div class="value">Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
+            <div class="value">Manager: ${job.unitManagerName}</div>
+            <div class="value">Lock Code: <strong>${job.lockCode}</strong></div>
+            <div class="value">Beds: ${job.bedInfo}</div>
+            <div class="value">Bathrooms: ${job.bathInfo}</div>
+          </div>
+          <div class="section">
+            <div class="label">WiFi & Amenities:</div>
+            <div class="value">Network: ${job.wifiNetwork}</div>
+            <div class="value">Password: ${job.wifiPassword}</div>
+            ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
+          </div>
+          <div class="section">
+            <div class="label">Cleaning Instructions:</div>
+            <div class="value">Standard: ${job.permanentInstructions}</div>
+            <div class="value">This Week: ${job.weekSpecificInstructions}</div>
+            <div class="value">Linen: ${job.linenInstructions}</div>
+          </div>
+          <div class="section">
+            <div class="label">Parking:</div>
+            <div class="value">Space: ${job.parkingSpace}</div>
+            <div class="value">Instructions: ${job.parkingInstructions}</div>
+          </div>
+          ${job.assigned ? `
+            <div class="section">
+              <div class="label">Assigned Cleaner:</div>
+              <div class="value">Name: ${job.assigned.name}</div>
+              <div class="value">Team: ${job.assigned.team}</div>
+              <div class="value">Phone: ${job.assigned.phone}</div>
+              <div class="value">Email: ${job.assigned.email}</div>
+              <div class="value">Rating: (${job.assigned.rating.toFixed(1)})</div>
+            </div>
+          ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
+        </body>
+      </html>
+    `;
   };
 
   const printWindow = window.open('', '', 'height=800,width=600');
