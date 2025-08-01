@@ -313,68 +313,82 @@ const ModernCleaningSystem = () => {
     });
   }, [jobs, selectedJobs]);
 
-  const printJobs = useCallback((jobIds = []) => {
-    const ids = jobIds.length > 0 ? jobIds : Array.from(selectedJobs);
-    const jobsToPrint = jobs.filter(job => ids.includes(job.id));
-    
-    if (jobsToPrint.length === 0) {
-      toast.error('No jobs selected to print.', {
-        position: 'top-right',
-        autoClose: 3000,
-        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
-      });
-      return;
-    }
+  // ... (keep all previous code unchanged until printJobs function) ...
 
-    // Generate print template (simplified for performance)
-    const generatePrintTemplate = (job) => {
-      return `
-        <div class="header">🏨 ${job.location} - Room ${job.room}</div>
-        <div class="section">
-          <div class="label">Schedule:</div>
-          <div class="value">Start Time: ${job.startTime}</div>
-          <div class="value">Due Time: ${job.dueTime}</div>
-          <div class="value">Date: ${new Date(job.date).toLocaleDateString()}</div>
-        </div>
-        <div class="section">
-          <div class="label">Access Information:</div>
-          <div class="value">Lock Code: <strong>${job.lockCode}</strong></div>
-          <div class="value">Room Type: ${job.roomType}</div>
-        </div>
-      `;
-    };
+const printJobs = useCallback((jobIds = []) => {
+  const ids = jobIds.length > 0 ? jobIds : Array.from(selectedJobs);
+  const jobsToPrint = jobs.filter(job => ids.includes(job.id));
+  
+  if (jobsToPrint.length === 0) {
+    toast.error('No jobs selected to print.', {
+      position: 'top-right',
+      autoClose: 3000,
+      className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+    });
+    return;
+  }
 
-    const printWindow = window.open('', '', 'height=800,width=600');
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 30px; }
-            .header { font-size: 28px; font-weight: bold; margin-bottom: 30px; }
-            .section { margin: 20px 0; padding: 15px; border-left: 5px solid #3B82F6; }
-            .label { font-weight: bold; margin-bottom: 5px; }
-            .value { margin-left: 15px; margin-bottom: 8px; }
-          </style>
-        </head>
-        <body>
-          ${jobsToPrint.map(generatePrintTemplate).join('<div style="page-break-after: always;"></div>')}
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
-    
-    setJobs(prevJobs => 
-      prevJobs.map(job => 
-        ids.includes(job.id) ? { ...job, status: 'printed' } : job
-      )
-    );
-    setSelectedJobs(new Set());
-  }, [jobs, selectedJobs]);
+  // Generate print template (simplified for performance)
+  const generatePrintTemplate = (job) => {
+    return `
+      <div class="header">🏨 ${job.location} - Room ${job.room}</div>
+      <div class="section">
+        <div class="label">Schedule:</div>
+        <div class="value">Start Time: ${job.startTime}</div>
+        <div class="value">Due Time: ${job.dueTime}</div>
+        <div class="value">Date: ${new Date(job.date).toLocaleDateString()}</div>
+      </div>
+      <div class="section">
+        <div class="label">Access Information:</div>
+        <div class="value">Lock Code: <strong>${job.lockCode}</strong></div>
+        <div class="value">Room Type: ${job.roomType}</div>
+      </div>
+      ${job.assigned ? `
+        <div class="section">
+          <div class="label">Assigned Cleaner:</div>
+          <div class="value">Name: ${job.assigned.name}</div>
+          <div class="value">Team: ${job.assigned.team}</div>
+          <div class="value">Cleaner Schedule:</div>
+          <div class="value">Availability: ${job.assigned.available ? 'Available' : 'Not Available'}</div>
+          <div class="value">Current Assigned Jobs: ${job.assigned.assignedJobs}</div>
+        </div>
+      ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
+    `;  // End of template
+  };
+
+  const printWindow = window.open('', '', 'height=800,width=600');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 30px; }
+          .header { font-size: 28px; font-weight: bold; margin-bottom: 30px; }
+          .section { margin: 20px 0; padding: 15px; border-left: 5px solid #3B82F6; }
+          .label { font-weight: bold; margin-bottom: 5px; }
+          .value { margin-left: 15px; margin-bottom: 8px; }
+        </style>
+      </head>
+      <body>
+        ${jobsToPrint.map(generatePrintTemplate).join('<div style="page-break-after: always;"></div>')}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+  
+  setJobs(prevJobs => 
+    prevJobs.map(job => 
+      ids.includes(job.id) ? { ...job, status: 'printed' } : job
+    )
+  );
+  setSelectedJobs(new Set());
+}, [jobs, selectedJobs]);
+
+// ... (keep all remaining code unchanged) ...
 
   const printJobsForCleaner = useCallback(() => {
     const cleanerId = Number(filters.cleaner);
