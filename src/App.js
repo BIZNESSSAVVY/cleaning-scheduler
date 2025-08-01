@@ -328,67 +328,114 @@ const printJobs = useCallback((jobIds = []) => {
     return;
   }
 
-  // Generate print template with all requested fields
+  // Generate premium print template with page breaks and enhanced styling
   const generatePrintTemplate = (job) => {
     return `
       <!DOCTYPE html>
       <html>
         <head>
           <style>
-            body { font-family: Arial, sans-serif; padding: 30px; }
-            .header { font-size: 28px; font-weight: bold; margin-bottom: 30px; }
-            .section { margin: 20px 0; padding: 15px; border-left: 5px solid #3B82F6; }
-            .label { font-weight: bold; margin-bottom: 5px; }
-            .value { margin-left: 15px; margin-bottom: 8px; }
+            body {
+              font-family: 'Helvetica Neue', Arial, sans-serif;
+              padding: 40px;
+              background-color: #f9fafb;
+              color: #1f2937;
+            }
+            .header {
+              font-size: 32px;
+              font-weight: 700;
+              color: #1e40af;
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 4px solid #3b82f6;
+              padding-bottom: 10px;
+              text-transform: uppercase;
+            }
+            .section {
+              margin: 25px 0;
+              padding: 20px;
+              background-color: #ffffff;
+              border-left: 6px solid #3b82f6;
+              border-radius: 8px;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .label {
+              font-size: 18px;
+              font-weight: 600;
+              color: #1e40af;
+              margin-bottom: 10px;
+              text-transform: uppercase;
+            }
+            .value {
+              font-size: 16px;
+              color: #374151;
+              margin-left: 15px;
+              margin-bottom: 8px;
+              line-height: 1.5;
+            }
+            .highlight {
+              font-weight: 700;
+              color: #dc2626;
+              background-color: #fee2e2;
+              padding: 2px 8px;
+              border-radius: 4px;
+            }
+            .crucial {
+              font-size: 18px;
+              font-weight: 700;
+              color: #b91c1c;
+            }
+            @page { margin: 0.5in; }
           </style>
         </head>
         <body>
           <div class="header">🏨 ${job.location} - Room ${job.room}</div>
           <div class="section">
-            <div class="label">Room Type:</div>
+            <div class="label">Room Type</div>
             <div class="value">${job.roomType}</div>
           </div>
           <div class="section">
-            <div class="label">Schedule:</div>
-            <div class="value">Date: ${new Date(job.date).toLocaleDateString()}</div>
-            <div class="value">Time: ${job.startTime} - ${job.dueTime}</div>
-            <div class="value">Guests: ${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</div>
+            <div class="label">Schedule</div>
+            <div class="value">Date: <span class="crucial">${new Date(job.date).toLocaleDateString()}</span></div>
+            <div class="value">Time: <span class="crucial">${job.startTime} - ${job.dueTime}</span></div>
+            <div class="value">Guests: <span class="crucial">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span></div>
           </div>
           <div class="section">
-            <div class="label">Property Details:</div>
+            <div class="label">Property Details</div>
             <div class="value">Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
             <div class="value">Manager: ${job.unitManagerName}</div>
-            <div class="value">Lock Code: <strong>${job.lockCode}</strong></div>
+            <div class="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
             <div class="value">Beds: ${job.bedInfo}</div>
             <div class="value">Bathrooms: ${job.bathInfo}</div>
           </div>
           <div class="section">
-            <div class="label">WiFi & Amenities:</div>
+            <div class="label">WiFi & Amenities</div>
             <div class="value">Network: ${job.wifiNetwork}</div>
-            <div class="value">Password: ${job.wifiPassword}</div>
+            <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
             ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
           </div>
           <div class="section">
-            <div class="label">Cleaning Instructions:</div>
+            <div class="label">Cleaning Instructions</div>
             <div class="value">Standard: ${job.permanentInstructions}</div>
             <div class="value">This Week: ${job.weekSpecificInstructions}</div>
             <div class="value">Linen: ${job.linenInstructions}</div>
           </div>
           <div class="section">
-            <div class="label">Parking:</div>
+            <div class="label">Parking</div>
             <div class="value">Space: ${job.parkingSpace}</div>
             <div class="value">Instructions: ${job.parkingInstructions}</div>
           </div>
           ${job.assigned ? `
             <div class="section">
-              <div class="label">Assigned Cleaner:</div>
-              <div class="value">Name: ${job.assigned.name}</div>
+              <div class="label">Assigned Cleaner</div>
+              <div class="value">Name: <span class="crucial">${job.assigned.name}</span></div>
               <div class="value">Team: ${job.assigned.team}</div>
-              <div class="value">Phone: ${job.assigned.phone}</div>
-              <div class="value">Email: ${job.assigned.email}</div>
-              <div class="value">Rating: (${job.assigned.rating.toFixed(1)})</div>
+              <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
+              <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
+              <div class="value">Rating: (<span class="crucial">${job.assigned.rating.toFixed(1)}</span>)</div>
             </div>
           ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
+          <div style="page-break-after: always;"></div>
         </body>
       </html>
     `;
@@ -400,15 +447,61 @@ const printJobs = useCallback((jobIds = []) => {
     <html>
       <head>
         <style>
-          body { font-family: Arial, sans-serif; padding: 30px; }
-          .header { font-size: 28px; font-weight: bold; margin-bottom: 30px; }
-          .section { margin: 20px 0; padding: 15px; border-left: 5px solid #3B82F6; }
-          .label { font-weight: bold; margin-bottom: 5px; }
-          .value { margin-left: 15px; margin-bottom: 8px; }
+          body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            padding: 40px;
+            background-color: #f9fafb;
+            color: #1f2937;
+          }
+          .header {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e40af;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 4px solid #3b82f6;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+          }
+          .section {
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #ffffff;
+            border-left: 6px solid #3b82f6;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          }
+          .label {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+          }
+          .value {
+            font-size: 16px;
+            color: #374151;
+            margin-left: 15px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+          }
+          .highlight {
+            font-weight: 700;
+            color: #dc2626;
+            background-color: #fee2e2;
+            padding: 2px 8px;
+            border-radius: 4px;
+          }
+          .crucial {
+            font-size: 18px;
+            font-weight: 700;
+            color: #b91c1c;
+          }
+          @page { margin: 0.5in; }
         </style>
       </head>
       <body>
-        ${jobsToPrint.map(generatePrintTemplate).join('<div style="page-break-after: always;"></div>')}
+        ${jobsToPrint.map(generatePrintTemplate).join('')}
       </body>
     </html>
   `);
@@ -425,6 +518,7 @@ const printJobs = useCallback((jobIds = []) => {
   );
   setSelectedJobs(new Set());
 }, [jobs, selectedJobs]);
+
 
 // ... (keep all remaining code unchanged) ...
 
