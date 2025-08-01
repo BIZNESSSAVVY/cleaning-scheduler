@@ -328,7 +328,7 @@ const printJobs = useCallback((jobIds = []) => {
     return;
   }
 
-  // Generate premium print template with page breaks and enhanced styling
+  // Generate premium print template with enhanced styling
   const generatePrintTemplate = (job) => {
     return `
       <!DOCTYPE html>
@@ -435,7 +435,6 @@ const printJobs = useCallback((jobIds = []) => {
               <div class="value">Rating: (<span class="crucial">${job.assigned.rating.toFixed(1)}</span>)</div>
             </div>
           ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
-          <div style="page-break-after: always;"></div>
         </body>
       </html>
     `;
@@ -501,7 +500,7 @@ const printJobs = useCallback((jobIds = []) => {
         </style>
       </head>
       <body>
-        ${jobsToPrint.map(generatePrintTemplate).join('')}
+        ${jobsToPrint.map(generatePrintTemplate).join('<div style="page-break-after: always;"></div>')}
       </body>
     </html>
   `);
@@ -518,7 +517,6 @@ const printJobs = useCallback((jobIds = []) => {
   );
   setSelectedJobs(new Set());
 }, [jobs, selectedJobs]);
-
 
 // ... (keep all remaining code unchanged) ...
 
