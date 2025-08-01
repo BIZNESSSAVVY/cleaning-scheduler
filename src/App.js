@@ -4,7 +4,7 @@ import { debounce } from 'lodash';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { unstable_batchedUpdates } from 'react-dom';
-import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
+import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award, brush } from 'lucide-react';
 
 // Static data generation (unchanged)
 const FAKE_DATA = (() => {
@@ -608,7 +608,7 @@ const printJobs = useCallback((jobIds = []) => {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="bg-blue-600 p-2 rounded-xl">
-                <Award className="w-6 h-6 text-white" />
+                <Brush className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Savvy OS</h1>
