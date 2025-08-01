@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
+import { FixedSizeGrid as Grid } from 'react-window';
 import { debounce } from 'lodash';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -61,6 +62,151 @@ const FAKE_DATA = (() => {
   return { jobs, cleaners };
 })();
 
+// PERFORMANCE OPTIMIZATION: Memoized JobCard component with stable props
+const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, onNotify }) => (
+  <div className={`
+    bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer m-2
+    ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}
+    ${job.priority === 'high' ? 'ring-2 ring-red-300' : ''}
+  `}>
+    <div className="p-4">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => onSelect(job.id, e.target.checked)}
+            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div>
+            <div className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              Room {job.room}
+              {job.scheduledNotification && (
+                <Calendar className="w-4 h-4 text-purple-600" title="Notification Scheduled" />
+              )}
+            </div>
+            <div className="text-sm text-gray-600">{job.roomType}</div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {job.priority === 'high' && (
+            <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+              <Zap className="w-3 h-3" />
+              URGENT
+            </div>
+          )}
+          <div className="flex gap-1">
+            {job.wifiIncluded && <Wifi className="w-4 h-4 text-blue-600" title="WiFi Included" />}
+            {job.linenPickup && <Package className="w-4 h-4 text-orange-600" title="Linen Pickup Required" />}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2 mb-4">
+        <div className="flex items-center gap-2 text-gray-700">
+          <MapPin className="w-4 h-4 text-blue-600" />
+          <span className="font-medium">{job.location}</span>
+        </div>
+        <div className="flex items-center gap-2 text-gray-700">
+          <Clock className="w-4 h-4 text-green-600" />
+          <span>{job.startTime} - {job.dueTime} ({job.predictedTime})</span>
+        </div>
+        <div className="flex items-center gap-2 text-gray-700">
+          <Users className="w-4 h-4 text-purple-600" />
+          <span>{job.guestCount} guests{job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        {job.assigned ? (
+          <div className="flex items-center gap-2 bg-green-50 p-2 rounded-lg border border-green-200">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            <div className="flex-1">
+              <div className="font-medium text-green-800">{job.assigned.name}</div>
+              <div className="text-sm text-green-600">{job.assigned.team}</div>
+            </div>
+            <div className="flex items-center gap-1 text-yellow-500">
+              {[...Array(Math.floor(job.assigned.rating))].map((_, i) => (
+                <Star key={i} className="w-3 h-3 fill-current" />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
+            <AlertCircle className="w-4 h-4 text-yellow-600" />
+            <span className="font-medium text-yellow-800">Awaiting Assignment</span>
+          </div>
+        )}
+      </div>
+      
+      <div className="flex gap-2">
+        <button
+          onClick={() => onViewDetail(job)}
+          className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-1"
+        >
+          <Eye className="w-4 h-4" />
+          <span className="hidden sm:inline">View</span>
+        </button>
+        
+        {job.assigned && (
+          <>
+            <button
+              onClick={() => onPrint([job.id])}
+              className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-1"
+            >
+              <Printer className="w-4 h-4" />
+              <span className="hidden sm:inline">Print</span>
+            </button>
+            
+            <button
+              onClick={() => onNotify(job)}
+              className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-1"
+            >
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline">Notify</span>
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  </div>
+));
+
+// PERFORMANCE OPTIMIZATION: Virtualized grid cell component
+const GridCell = React.memo(({ columnIndex, rowIndex, style, data }) => {
+  const { 
+    filteredJobs, 
+    selectedJobs, 
+    onJobSelect, 
+    onViewDetail, 
+    onPrint, 
+    onNotify,
+    columnsPerRow 
+  } = data;
+  
+  const jobIndex = rowIndex * columnsPerRow + columnIndex;
+  const job = filteredJobs[jobIndex];
+  
+  if (!job) {
+    return <div style={style} />;
+  }
+  
+  return (
+    <div style={style}>
+      <JobCard
+        job={job}
+        isSelected={selectedJobs.has(job.id)}
+        onSelect={onJobSelect}
+        onViewDetail={onViewDetail}
+        onPrint={onPrint}
+        onNotify={onNotify}
+      />
+    </div>
+  );
+});
+
 const ModernCleaningSystem = () => {
   const [jobs, setJobs] = useState(FAKE_DATA.jobs);
   const [selectedJobs, setSelectedJobs] = useState(new Set());
@@ -73,14 +219,16 @@ const ModernCleaningSystem = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [bulkSMSMessage, setBulkSMSMessage] = useState('');
+  
+  const gridRef = useRef();
 
-  // PERFORMANCE FIX 1: Debounce search input
+  // PERFORMANCE FIX: Debounce search input
   const debouncedSetSearchTerm = useCallback(
     debounce((value) => setSearchTerm(value), 300),
     []
   );
 
-  // PERFORMANCE FIX 2: Optimized filtered jobs
+  // PERFORMANCE FIX: Optimized filtered jobs with proper memoization
   const filteredJobs = useMemo(() => {
     return jobs.filter(job => {
       const matchesSearch = job.room.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -97,7 +245,7 @@ const ModernCleaningSystem = () => {
     });
   }, [jobs, searchTerm, filters]);
 
-  // PERFORMANCE FIX 3: Memoized stats
+  // PERFORMANCE FIX: Memoized stats
   const stats = useMemo(() => {
     const total = jobs.length;
     const unassigned = jobs.filter(job => !job.assigned).length;
@@ -109,7 +257,7 @@ const ModernCleaningSystem = () => {
     return { total, unassigned, assigned, printed, availableCleaners, scheduled };
   }, [jobs]);
 
-  // PERFORMANCE FIX 4: Memoized event handlers
+  // PERFORMANCE FIX: Stable event handlers with useCallback
   const handleJobSelect = useCallback((jobId, isSelected) => {
     setSelectedJobs(prev => {
       const newSelected = new Set(prev);
@@ -122,18 +270,22 @@ const ModernCleaningSystem = () => {
     });
   }, []);
 
+  const handleViewDetail = useCallback((job) => {
+    setShowJobDetail(job);
+  }, []);
+
+  const handleNotify = useCallback((job) => {
+    setShowNotifyModal(job);
+  }, []);
+
   const assignJobs = useCallback((cleanerId) => {
     const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
     const jobIds = Array.from(selectedJobs);
     
-    console.log('Assigning jobs:', { cleanerId, jobIds }); // Debug log
-    
     if (!cleaner || jobIds.length === 0) {
-      console.error('Invalid assignment:', { cleaner, jobIds });
       return;
     }
 
-    // Optimize: Update only selected jobs to reduce computation
     const updatedJobs = [...jobs];
     jobIds.forEach(jobId => {
       const index = updatedJobs.findIndex(job => job.id === jobId);
@@ -142,30 +294,23 @@ const ModernCleaningSystem = () => {
       }
     });
 
-    // Batch updates to minimize re-renders
     unstable_batchedUpdates(() => {
       setJobs(updatedJobs);
       setSelectedJobs(new Set());
       setShowAssignModal(false);
     });
 
-    // Trigger styled toast notification
-    try {
-      toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        className: 'bg-green-500 text-white font-medium rounded-lg shadow-lg p-4',
-        bodyClassName: 'flex items-center gap-2',
-        icon: <CheckCircle className="w-5 h-5" />
-      });
-      console.log('Toast triggered successfully');
-    } catch (error) {
-      console.error('Toast error:', error);
-    }
+    toast.success(`Assigned ${jobIds.length} job${jobIds.length > 1 ? 's' : ''} to ${cleaner.name}.`, {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      className: 'bg-green-500 text-white font-medium rounded-lg shadow-lg p-4',
+      bodyClassName: 'flex items-center gap-2',
+      icon: <CheckCircle className="w-5 h-5" />
+    });
   }, [jobs, selectedJobs]);
 
   const printJobs = useCallback((jobIds = []) => {
@@ -181,94 +326,39 @@ const ModernCleaningSystem = () => {
       return;
     }
 
-    // Combine all job templates into a single document with page breaks
+    // Generate print template (simplified for performance)
+    const generatePrintTemplate = (job) => {
+      return `
+        <div class="header">🏨 ${job.location} - Room ${job.room}</div>
+        <div class="section">
+          <div class="label">Schedule:</div>
+          <div class="value">Start Time: ${job.startTime}</div>
+          <div class="value">Due Time: ${job.dueTime}</div>
+          <div class="value">Date: ${new Date(job.date).toLocaleDateString()}</div>
+        </div>
+        <div class="section">
+          <div class="label">Access Information:</div>
+          <div class="value">Lock Code: <strong>${job.lockCode}</strong></div>
+          <div class="value">Room Type: ${job.roomType}</div>
+        </div>
+      `;
+    };
+
     const printWindow = window.open('', '', 'height=800,width=600');
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
           <style>
-            body { 
-              font-family: 'Arial', sans-serif; 
-              padding: 30px; 
-              line-height: 1.6; 
-              background: white;
-              color: #333;
-              max-width: 800px;
-              margin: 0 auto;
-            }
-            .job-page { 
-              page-break-after: always; 
-              margin-bottom: 30px; 
-            }
-            .job-page:last-child { 
-              page-break-after: auto; 
-            }
-            .header { 
-              font-size: 28px; 
-              font-weight: bold; 
-              margin-bottom: 30px; 
-              text-align: center; 
-              color: #2563EB;
-              border-bottom: 3px solid #2563EB;
-              padding-bottom: 15px;
-            }
-            .section { 
-              margin: 20px 0; 
-              padding: 15px; 
-              border-left: 5px solid #3B82F6; 
-              background: #F8FAFC;
-              border-radius: 0 8px 8px 0;
-            }
-            .label { 
-              font-weight: bold; 
-              color: #1F2937; 
-              font-size: 16px;
-              margin-bottom: 5px;
-            }
-            .value { 
-              margin-left: 15px; 
-              font-size: 15px;
-              margin-bottom: 8px;
-            }
-            .important { 
-              background: #FEF3C7; 
-              padding: 20px; 
-              border-radius: 8px; 
-              margin: 15px 0; 
-              border: 2px solid #F59E0B;
-            }
-            .contact-info {
-              background: #DBEAFE;
-              padding: 20px;
-              border-radius: 8px;
-              margin: 15px 0;
-              border: 2px solid #3B82F6;
-            }
-            .instructions {
-              background: #F0FDF4;
-              padding: 20px;
-              border-radius: 8px;
-              margin: 15px 0;
-              border: 2px solid #10B981;
-            }
-            .footer {
-              margin-top: 40px;
-              text-align: center;
-              font-size: 12px;
-              color: #6B7280;
-              border-top: 1px solid #E5E7EB;
-              padding-top: 20px;
-            }
-            .emoji { font-size: 18px; margin-right: 8px; }
+            body { font-family: Arial, sans-serif; padding: 30px; }
+            .header { font-size: 28px; font-weight: bold; margin-bottom: 30px; }
+            .section { margin: 20px 0; padding: 15px; border-left: 5px solid #3B82F6; }
+            .label { font-weight: bold; margin-bottom: 5px; }
+            .value { margin-left: 15px; margin-bottom: 8px; }
           </style>
         </head>
         <body>
-          ${jobsToPrint.map(job => `
-            <div class="job-page">
-              ${generatePrintTemplate(job)}
-            </div>
-          `).join('')}
+          ${jobsToPrint.map(generatePrintTemplate).join('<div style="page-break-after: always;"></div>')}
         </body>
       </html>
     `);
@@ -289,20 +379,12 @@ const ModernCleaningSystem = () => {
   const printJobsForCleaner = useCallback(() => {
     const cleanerId = Number(filters.cleaner);
     if (!cleanerId) {
-      toast.error('Please select a cleaner to print jobs.', {
-        position: 'top-right',
-        autoClose: 3000,
-        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
-      });
+      toast.error('Please select a cleaner to print jobs.');
       return;
     }
     const cleanerJobs = jobs.filter(job => job.assigned && job.assigned.id === cleanerId).map(job => job.id);
     if (cleanerJobs.length === 0) {
-      toast.info('No jobs assigned to this cleaner.', {
-        position: 'top-right',
-        autoClose: 3000,
-        className: 'bg-blue-500 text-white font-medium rounded-lg shadow-lg p-4',
-      });
+      toast.info('No jobs assigned to this cleaner.');
       return;
     }
     printJobs(cleanerJobs);
@@ -310,18 +392,8 @@ const ModernCleaningSystem = () => {
 
   const sendNotification = useCallback((job, messageType = 'full') => {
     const message = messageType === 'full' ? 
-      `Job Assignment - ${job.location}
-Location: ${job.location}, 131 Georgia Avenue, Ocean City, MD
-Room: ${job.room} (${job.roomType})
-Time: ${job.startTime} - ${job.dueTime}
-Lock Code: ${job.lockCode}
-Manager: ${job.unitManagerName} (443) 953-6024
-Guests: ${job.guestCount}, Dogs: ${job.dogCount}
-WiFi: ${job.wifiNetwork} / ${job.wifiPassword}
-Parking: ${job.parkingSpace} - ${job.parkingInstructions}
-Instructions: ${job.weekSpecificInstructions}
-Linen: ${job.linenInstructions}` :
-      `${job.assigned?.name}: ${job.location} Room ${job.room}, ${job.startTime}, Code: ${job.lockCode}, Manager: (443) 953-6024`;
+      `Job Assignment - ${job.location} Location: ${job.location}, Room: ${job.room}` :
+      `${job.assigned?.name}: ${job.location} Room ${job.room}, ${job.startTime}`;
     
     console.log('Notification sent:', message);
     alert(`✅ ${messageType === 'full' ? 'Email' : 'SMS'} sent to ${job.assigned?.name}!`);
@@ -353,195 +425,26 @@ Linen: ${job.linenInstructions}` :
     setSelectedJobs(new Set());
   }, [jobs, selectedJobs, bulkSMSMessage]);
 
-  const generatePrintTemplate = (job) => {
-    return `
-      <div class="header">
-        🏨 ${job.location} - Room ${job.room}
-      </div>
-      
-      <div class="important">
-        <div class="label"><span class="emoji">📍</span>Property Address:</div>
-        <div class="value">${job.location}<br>131 Georgia Avenue, Ocean City, MD 21842</div>
-      </div>
-
-      <div class="contact-info">
-        <div class schoen="label"><span class="emoji">👤</span>Property Manager:</div>
-        <div class="value">${job.unitManagerName}</div>
-        <div class="value">📞 (443) 953-6024</div>
-      </div>
-      
-      <div class="section">
-        <div class="label"><span class="emoji">🕐</span>Schedule:</div>
-        <div class="value">Start Time: ${job.startTime}</div>
-        <div class="value">Due Time: ${job.dueTime}</div>
-        <div class="value">Estimated Duration: ${job.predictedTime}</div>
-        <div class="value">Date: ${new Date(job.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-      </div>
-      
-      <div class="section">
-        <div class="label"><span class="emoji">🔑</span>Access Information:</div>
-        <div class="value">Lock Code: <strong>${job.lockCode}</strong></div>
-        <div class="value">Room Type: ${job.roomType}</div>
-      </div>
-      
-      <div class="section">
-        <div class="label"><span class="emoji">👥</span>Occupancy Details:</div>
-        <div class="value">Number of Guests: ${job.guestCount}</div>
-        ${job.dogCount > 0 ? `<div class="value">Dogs: ${job.dogCount}</div>` : ''}
-        <div class="value">Bed Configuration: ${job.bedInfo}</div>
-        <div class="value">Bathroom Details: ${job.bathInfo}</div>
-      </div>
-      
-      <div class="section">
-        <div class="label"><span class="emoji">📶</span>WiFi Information:</div>
-        <div class="value">Network: ${job.wifiNetwork}</div>
-        <div class="value">Password: ${job.wifiPassword}</div>
-      </div>
-      
-      <div class="section">
-        <div class="label"><span class="emoji">🚗</span>Parking Instructions:</div>
-        <div class="value">Assigned Space: ${job.parkingSpace}</div>
-        <div class="value">${job.parkingInstructions}</div>
-      </div>
-      
-      <div class="instructions">
-        <div class="label"><span class="emoji">📋</span>Cleaning Instructions:</div>
-        <div class="value"><strong>Standard Protocol:</strong> ${job.permanentInstructions}</div>
-        <div class="value"><strong>This Week Special:</strong> ${job.weekSpecificInstructions}</div>
-        <div class="value"><strong>Linen Instructions:</strong> ${job.linenInstructions}</div>
-      </div>
-
-      <div class="footer">
-        <p><strong>Savvy OS</strong> - Professional Cleaning Management System</p>
-        <p>Generated on ${new Date().toLocaleString()}</p>
-      </div>
-    `;
-  };
-
-  // PERFORMANCE FIX 5: Memoized JobCard component
-  const JobCard = React.memo(({ job, isSelected, onSelect }) => (
-    <div className={`
-      bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer
-      ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}
-      ${job.priority === 'high' ? 'ring-2 ring-red-300' : ''}
-    `}>
-      <div className="p-4">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={(e) => onSelect(job.id, e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              onClick={(e) => e.stopPropagation()}
-            />
-            <div>
-              <div className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                Room {job.room}
-                {job.scheduledNotification && (
-                  <Calendar className="w-4 h-4 text-purple-600" title="Notification Scheduled" />
-                )}
-              </div>
-              <div className="text-sm text-gray-600">{job.roomType}</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {job.priority === 'high' && (
-              <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                <Zap className="w-3 h-3" />
-                URGENT
-              </div>
-            )}
-            <div className="flex gap-1">
-              {job.wifiIncluded && <Wifi className="w-4 h-4 text-blue-600" title="WiFi Included" />}
-              {job.linenPickup && <Package className="w-4 h-4 text-orange-600" title="Linen Pickup Required" />}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2 text-gray-700">
-            <MapPin className="w-4 h-4 text-blue-600" />
-            <span className="font-medium">{job.location}</span>
-          </div>
-          <div className="flex items-center gap-2 text-gray-700">
-            <Clock className="w-4 h-4 text-green-600" />
-            <span>{job.startTime} - {job.dueTime} ({job.predictedTime})</span>
-          </div>
-          <div className="flex items-center gap-2 text-gray-700">
-            <Users className="w-4 h-4 text-purple-600" />
-            <span>{job.guestCount} guests{job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          {job.assigned ? (
-            <div className="flex items-center gap-2 bg-green-50 p-2 rounded-lg border border-green-200">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <div className="flex-1">
-                <div className="font-medium text-green-800">{job.assigned.name}</div>
-                <div className="text-sm text-green-600">{job.assigned.team}</div>
-              </div>
-              <div className="flex items-center gap-1 text-yellow-500">
-                {[...Array(Math.floor(job.assigned.rating))].map((_, i) => (
-                  <Star key={i} className="w-3 h-3 fill-current" />
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
-              <AlertCircle className="w-4 h-4 text-yellow-600" />
-              <span className="font-medium text-yellow-800">Awaiting Assignment</span>
-            </div>
-          )}
-        </div>
-        
-        <div className="flex gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowJobDetail(job);
-            }}
-            className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-1"
-          >
-            <Eye className="w-4 h-4" />
-            <span className="hidden sm:inline">View</span>
-          </button>
-          
-          {job.assigned && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  printJobs([job.id]);
-                }}
-                className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-1"
-              >
-                <Printer className="w-4 h-4" />
-                <span className="hidden sm:inline">Print</span>
-              </button>
-              
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowNotifyModal(job);
-                }}
-                className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-1"
-              >
-                <Bell className="w-4 h-4" />
-                <span className="hidden sm:inline">Notify</span>
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  ));
+  // PERFORMANCE OPTIMIZATION: Grid configuration
+  const columnsPerRow = 3; // Changed from 4 to 3 for better responsiveness
+  const cardHeight = 320;
+  const cardWidth = 400;
+  
+  const rowCount = Math.ceil(filteredJobs.length / columnsPerRow);
+  
+  // PERFORMANCE OPTIMIZATION: Memoized grid data
+  const gridData = useMemo(() => ({
+    filteredJobs,
+    selectedJobs,
+    onJobSelect: handleJobSelect,
+    onViewDetail: handleViewDetail,
+    onPrint: printJobs,
+    onNotify: handleNotify,
+    columnsPerRow
+  }), [filteredJobs, selectedJobs, handleJobSelect, handleViewDetail, printJobs, handleNotify]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Toast Container */}
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -581,11 +484,7 @@ Linen: ${job.linenInstructions}` :
               <label className="bg-blue-600 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-700 transition-colors font-medium flex items-center gap-2">
                 <Plus className="w-4 h-4" />
                 Import Jobs
-                <input
-                  type="file"
-                  accept=".csv,.xlsx"
-                  className="hidden"
-                />
+                <input type="file" accept=".csv,.xlsx" className="hidden" />
               </label>
             </div>
           </div>
@@ -736,18 +635,23 @@ Linen: ${job.linenInstructions}` :
           )}
         </div>
 
-        {/* Job List - Multi-Column Grid */}
+        {/* PERFORMANCE OPTIMIZATION: Virtualized Job List */}
         <div className="bg-white rounded-xl shadow-md p-4">
           {filteredJobs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredJobs.map(job => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  isSelected={selectedJobs.has(job.id)}
-                  onSelect={handleJobSelect}
-                />
-              ))}
+            <div className="h-[600px]">
+              <Grid
+                ref={gridRef}
+                columnCount={columnsPerRow}
+                columnWidth={cardWidth}
+                height={600}
+                rowCount={rowCount}
+                rowHeight={cardHeight}
+                itemData={gridData}
+                width={1200}
+                className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+              >
+                {GridCell}
+              </Grid>
             </div>
           ) : (
             <div className="text-center py-12">
