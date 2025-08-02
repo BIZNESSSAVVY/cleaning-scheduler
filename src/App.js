@@ -461,7 +461,7 @@ const ModernCleaningSystem = () => {
             <style>
               @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap');
               body { font-family: 'Inter', sans-serif; padding: 20px; background: linear-gradient(135deg, #e0e7ff, #f7fafc); margin: 0; display: flex; justify-content: center; }
-              .card { max-width: 600px; background: rgba(255, 255, 255, 0.95); border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); padding: 20px; backdrop-filter: blur(5px); margin-bottom: 20px; }
+              .card { max-width: 600px; background: rgba(255, 255, 255, 0.95); border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); padding: 20px; backdrop-filter: blur(5px); margin-bottom: 20px; page-break-before: always; }
               .header { background: linear-gradient(135deg, #4a90e2, #63b3ed); color: #ffffff; padding: 12px; text-align: center; font-size: 20px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -20px -20px 15px -20px; position: relative; }
               .header::before { content: 'Savvy OS'; font-family: 'Roboto', sans-serif; font-size: 12px; color: #dbeafe; position: absolute; top: 5px; left: 15px; }
               .section { margin-bottom: 12px; }
@@ -473,7 +473,7 @@ const ModernCleaningSystem = () => {
             </style>
           </head>
           <body>
-            ${jobsToPrint.map(generatePrintTemplate).join('<div style="page-break-after: always;"></div>')}
+            ${jobsToPrint.map(generatePrintTemplate).join('')}
           </body>
         </html>
       `);
@@ -525,7 +525,7 @@ const ModernCleaningSystem = () => {
               .rating { color: #ecc94b; font-weight: 600; }
               .card { max-width: 600px; background: rgba(255, 255, 255, 0.95); border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); padding: 20px; backdrop-filter: blur(5px); margin-bottom: 20px; page-break-before: always; }
               .card-header { background: linear-gradient(135deg, #4a90e2, #63b3ed); color: #ffffff; padding: 12px; text-align: center; font-size: 20px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -20px -20px 15px -20px; position: relative; }
-              .card-header::before { content: 'Savvy OS'; font-family: 'Roboto', sans-serif; font-size: 12px; color: #dbeafe; position: absolute; top: 5px; left: 15px; }
+              .card-header::before { content: 'Savvy OS'; font-family: 'Roboto', sans-serif; font-size: 12px; color: #dbeafe; position: absolute; top: 5px; left: 15px; padding-right: 10px; }
               .card-section { margin-bottom: 12px; }
               .card-label { font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 5px; text-transform: uppercase; }
               .card-value { font-size: 13px; color: #2d3748; line-height: 1.5; margin-left: 10px; }
