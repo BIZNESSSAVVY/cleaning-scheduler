@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { unstable_batchedUpdates } from 'react-dom';
 import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
 
-// Static data generation (unchanged)
+// Static data generation
 const FAKE_DATA = (() => {
   const locations = ['Downtown Hotel', 'Riverside Inn', 'City Center Lodge', 'Park View Resort', 'Marina Hotel'];
   const roomTypes = ['Standard Room', 'Deluxe Suite', 'Presidential Suite', 'Studio Apartment'];
@@ -62,7 +62,7 @@ const FAKE_DATA = (() => {
   return { jobs, cleaners };
 })();
 
-// PERFORMANCE OPTIMIZATION: Memoized JobCard component with stable props
+// PERFORMANCE OPTIMIZATION: Memoized JobCard component
 const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, onNotify }) => (
   <div className={`
     bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer m-2
@@ -89,7 +89,6 @@ const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, 
             <div className="text-sm text-gray-600">{job.roomType}</div>
           </div>
         </div>
-        
         <div className="flex items-center gap-2">
           {job.priority === 'high' && (
             <div className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
@@ -103,7 +102,6 @@ const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, 
           </div>
         </div>
       </div>
-
       <div className="space-y-2 mb-4">
         <div className="flex items-center gap-2 text-gray-700">
           <MapPin className="w-4 h-4 text-blue-600" />
@@ -118,7 +116,6 @@ const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, 
           <span>{job.guestCount} guests{job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span>
         </div>
       </div>
-
       <div className="mb-4">
         {job.assigned ? (
           <div className="flex items-center gap-2 bg-green-50 p-2 rounded-lg border border-green-200">
@@ -140,7 +137,6 @@ const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, 
           </div>
         )}
       </div>
-      
       <div className="flex gap-2">
         <button
           onClick={() => onViewDetail(job)}
@@ -149,7 +145,6 @@ const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, 
           <Eye className="w-4 h-4" />
           <span className="hidden sm:inline">View</span>
         </button>
-        
         {job.assigned && (
           <>
             <button
@@ -159,7 +154,6 @@ const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, 
               <Printer className="w-4 h-4" />
               <span className="hidden sm:inline">Print</span>
             </button>
-            
             <button
               onClick={() => onNotify(job)}
               className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-1"
@@ -176,22 +170,11 @@ const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, 
 
 // PERFORMANCE OPTIMIZATION: Virtualized grid cell component
 const GridCell = React.memo(({ columnIndex, rowIndex, style, data }) => {
-  const { 
-    filteredJobs, 
-    selectedJobs, 
-    onJobSelect, 
-    onViewDetail, 
-    onPrint, 
-    onNotify,
-    columnsPerRow 
-  } = data;
-  
+  const { filteredJobs, selectedJobs, onJobSelect, onViewDetail, onPrint, onNotify, columnsPerRow } = data;
   const jobIndex = rowIndex * columnsPerRow + columnIndex;
   const job = filteredJobs[jobIndex];
   
-  if (!job) {
-    return <div style={style} />;
-  }
+  if (!job) return <div style={style} />;
   
   return (
     <div style={style}>
@@ -222,13 +205,13 @@ const ModernCleaningSystem = () => {
   
   const gridRef = useRef();
 
-  // PERFORMANCE FIX: Debounce search input
+  // PERFORMANCE: Debounce search input
   const debouncedSetSearchTerm = useCallback(
     debounce((value) => setSearchTerm(value), 300),
     []
   );
 
-  // PERFORMANCE FIX: Optimized filtered jobs with proper memoization
+  // PERFORMANCE: Optimized filtered jobs
   const filteredJobs = useMemo(() => {
     return jobs.filter(job => {
       const matchesSearch = job.room.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -245,7 +228,7 @@ const ModernCleaningSystem = () => {
     });
   }, [jobs, searchTerm, filters]);
 
-  // PERFORMANCE FIX: Memoized stats
+  // PERFORMANCE: Memoized stats
   const stats = useMemo(() => {
     const total = jobs.length;
     const unassigned = jobs.filter(job => !job.assigned).length;
@@ -257,32 +240,24 @@ const ModernCleaningSystem = () => {
     return { total, unassigned, assigned, printed, availableCleaners, scheduled };
   }, [jobs]);
 
-  // PERFORMANCE FIX: Stable event handlers with useCallback
+  // PERFORMANCE: Stable event handlers
   const handleJobSelect = useCallback((jobId, isSelected) => {
     setSelectedJobs(prev => {
       const newSelected = new Set(prev);
-      if (isSelected) {
-        newSelected.add(jobId);
-      } else {
-        newSelected.delete(jobId);
-      }
+      if (isSelected) newSelected.add(jobId);
+      else newSelected.delete(jobId);
       return newSelected;
     });
   }, []);
 
-  const handleViewDetail = useCallback((job) => {
-    setShowJobDetail(job);
-  }, []);
-
-  const handleNotify = useCallback((job) => {
-    setShowNotifyModal(job);
-  }, []);
+  const handleViewDetail = useCallback((job) => setShowJobDetail(job), []);
+  const handleNotify = useCallback((job) => setShowNotifyModal(job), []);
 
   const sendNotification = useCallback((job, messageType = 'full') => {
-    if (!job.assigned) return; // Prevent notification if no cleaner assigned
-    const message = messageType === 'full' ? 
-      `Job Assignment - ${job.location} Location: ${job.location}, Room: ${job.room}` :
-      `${job.assigned.name}: ${job.location} Room ${job.room}, ${job.startTime}`;
+    if (!job.assigned) return;
+    const message = messageType === 'full' 
+      ? `Job Assignment - ${job.location} Location: ${job.location}, Room: ${job.room}`
+      : `${job.assigned.name}: ${job.location} Room ${job.room}, ${job.startTime}`;
     
     console.log('Notification sent:', message);
     alert(`✅ ${messageType === 'full' ? 'Email' : 'SMS'} sent to ${job.assigned.name}!`);
@@ -293,16 +268,12 @@ const ModernCleaningSystem = () => {
     const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
     const jobIds = Array.from(selectedJobs);
     
-    if (!cleaner || jobIds.length === 0) {
-      return;
-    }
+    if (!cleaner || jobIds.length === 0) return;
 
     const updatedJobs = [...jobs];
     jobIds.forEach(jobId => {
       const index = updatedJobs.findIndex(job => job.id === jobId);
-      if (index !== -1) {
-        updatedJobs[index] = { ...updatedJobs[index], assigned: cleaner, status: 'assigned' };
-      }
+      if (index !== -1) updatedJobs[index] = { ...updatedJobs[index], assigned: cleaner, status: 'assigned' };
     });
 
     unstable_batchedUpdates(() => {
@@ -356,85 +327,40 @@ const ModernCleaningSystem = () => {
     }
 
     const sortedJobs = cleanerJobs.sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-    const generateSummaryTemplate = () => {
-      return `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>
-              body {
-                font-family: 'Helvetica Neue', Arial, sans-serif;
-                padding: 40px;
-                background-color: #f9fafb;
-                color: #1f2937;
-              }
-              .header {
-                font-size: 28px;
-                font-weight: 700;
-                color: #1e40af;
-                text-align: center;
-                margin-bottom: 20px;
-                border-bottom: 4px solid #3b82f6;
-                padding-bottom: 10px;
-                text-transform: uppercase;
-              }
-              .subheader {
-                font-size: 20px;
-                font-weight: 600;
-                color: #374151;
-                margin-bottom: 15px;
-              }
-              .job-list {
-                margin: 20px 0;
-                padding: 15px;
-                background-color: #ffffff;
-                border-left: 6px solid #3b82f6;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-              }
-              .job-item {
-                font-size: 16px;
-                margin-bottom: 10px;
-                color: #374151;
-              }
-              .info {
-                font-size: 16px;
-                color: #374151;
-                margin-bottom: 10px;
-              }
-              .rating {
-                font-size: 16px;
-                color: #f59e0b;
-                font-weight: 600;
-              }
-              @page { margin: 0.5in; }
-            </style>
-          </head>
-          <body>
-            <div class="header">${cleaner.name} - ${cleaner.team}</div>
-            <div class="info">Today: ${new Date().toLocaleDateString()}</div>
-            <div class="info">Total Jobs: ${cleanerJobs.length}</div>
-            <div class="job-list">
-              <div class="subheader">Job Schedule</div>
-              ${sortedJobs.map((job, index) => `
-                <div class="job-item">${index + 1}) ${job.location} ${job.room} - ${job.startTime}</div>
-              `).join('')}
-            </div>
-            <div class="info">Phone: ${cleaner.phone}</div>
-            <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
-          </body>
-        </html>
-      `;
-    };
+    const generateSummaryTemplate = () => `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; background-color: #f9fafb; color: #1f2937; }
+            .header { font-size: 28px; font-weight: 700; color: #1e40af; text-align: center; margin-bottom: 20px; border-bottom: 4px solid #3b82f6; padding-bottom: 10px; text-transform: uppercase; }
+            .subheader { font-size: 20px; font-weight: 600; color: #374151; margin-bottom: 15px; }
+            .job-list { margin: 20px 0; padding: 15px; background-color: #ffffff; border-left: 6px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+            .job-item { font-size: 16px; margin-bottom: 10px; color: #374151; }
+            .info { font-size: 16px; color: #374151; margin-bottom: 10px; }
+            .rating { font-size: 16px; color: #f59e0b; font-weight: 600; }
+            @page { margin: 0.5in; }
+          </style>
+        </head>
+        <body>
+          <div class="header">${cleaner.name} - ${cleaner.team}</div>
+          <div class="info">Today: ${new Date().toLocaleDateString()}</div>
+          <div class="info">Total Jobs: ${cleanerJobs.length}</div>
+          <div class="job-list">
+            <div class="subheader">Job Schedule</div>
+            ${sortedJobs.map((job, index) => `<div class="job-item">${index + 1}) ${job.location} ${job.room} - ${job.startTime}</div>`).join('')}
+          </div>
+          <div class="info">Phone: ${cleaner.phone}</div>
+          <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
+        </body>
+      </html>
+    `;
 
     const printWindow = window.open('', '', 'height=600,width=400');
     if (printWindow) {
       printWindow.document.write(generateSummaryTemplate());
       printWindow.document.close();
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
+      printWindow.print(); // Removed setTimeout for reliability
     } else {
       toast.error('Failed to open print window. Please check popup settings.', {
         position: 'top-right',
@@ -442,7 +368,7 @@ const ModernCleaningSystem = () => {
         className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
       });
     }
-  }, [jobs, filters.cleaner]);
+  }, [jobs, filters.cleaner, toast]);
 
   const printJobs = useCallback((jobIds = []) => {
     const ids = jobIds.length > 0 ? jobIds : Array.from(selectedJobs);
@@ -457,116 +383,71 @@ const ModernCleaningSystem = () => {
       return;
     }
 
-    const generatePrintTemplate = (job) => {
-      return `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>
-              body {
-                font-family: 'Helvetica Neue', Arial, sans-serif;
-                padding: 40px;
-                background-color: #f9fafb;
-                color: #1f2937;
-              }
-              .header {
-                font-size: 32px;
-                font-weight: 700;
-                color: #1e40af;
-                text-align: center;
-                margin-bottom: 30px;
-                border-bottom: 4px solid #3b82f6;
-                padding-bottom: 10px;
-                text-transform: uppercase;
-              }
-              .section {
-                margin: 25px 0;
-                padding: 20px;
-                background-color: #ffffff;
-                border-left: 6px solid #3b82f6;
-                border-radius: 8px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-              }
-              .label {
-                font-size: 18px;
-                font-weight: 600;
-                color: #1e40af;
-                margin-bottom: 10px;
-                text-transform: uppercase;
-              }
-              .value {
-                font-size: 16px;
-                color: #374151;
-                margin-left: 15px;
-                margin-bottom: 8px;
-                line-height: 1.5;
-              }
-              .highlight {
-                font-weight: 700;
-                color: #dc2626;
-                background-color: #fee2e2;
-                padding: 2px 8px;
-                border-radius: 4px;
-              }
-              .crucial {
-                font-size: 18px;
-                font-weight: 700;
-                color: #b91c1c;
-              }
-              @page { margin: 0.5in; }
-            </style>
-          </head>
-          <body>
-            <div class="header">🏨 ${job.location} - Room ${job.room}</div>
+    const generatePrintTemplate = (job) => `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; background-color: #f9fafb; color: #1f2937; }
+            .header { font-size: 32px; font-weight: 700; color: #1e40af; text-align: center; margin-bottom: 30px; border-bottom: 4px solid #3b82f6; padding-bottom: 10px; text-transform: uppercase; }
+            .section { margin: 25px 0; padding: 20px; background-color: #ffffff; border-left: 6px solid #3b82f6; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+            .label { font-size: 18px; font-weight: 600; color: #1e40af; margin-bottom: 10px; text-transform: uppercase; }
+            .value { font-size: 16px; color: #374151; margin-left: 15px; margin-bottom: 8px; line-height: 1.5; }
+            .highlight { font-weight: 700; color: #dc2626; background-color: #fee2e2; padding: 2px 8px; border-radius: 4px; }
+            .crucial { font-size: 18px; font-weight: 700; color: #b91c1c; }
+            @page { margin: 0.5in; }
+          </style>
+        </head>
+        <body>
+          <div class="header">🏨 ${job.location} - Room ${job.room}</div>
+          <div class="section">
+            <div class="label">Room Type</div>
+            <div class="value">${job.roomType}</div>
+          </div>
+          <div class="section">
+            <div class="label">Schedule</div>
+            <div class="value">Date: <span class="crucial">${new Date(job.date).toLocaleDateString()}</span></div>
+            <div class="value">Time: <span class="crucial">${job.startTime} - ${job.dueTime}</span></div>
+            <div class="value">Guests: <span class="crucial">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span></div>
+          </div>
+          <div class="section">
+            <div class="label">Property Details</div>
+            <div class="value">Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
+            <div class="value">Manager: ${job.unitManagerName}</div>
+            <div className="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
+            <div class="value">Beds: ${job.bedInfo}</div>
+            <div class="value">Bathrooms: ${job.bathInfo}</div>
+          </div>
+          <div class="section">
+            <div class="label">WiFi & Amenities</div>
+            <div class="value">Network: ${job.wifiNetwork}</div>
+            <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
+            ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
+          </div>
+          <div class="section">
+            <div class="label">Cleaning Instructions</div>
+            <div class="value">Standard: ${job.permanentInstructions}</div>
+            <div class="value">This Week: ${job.weekSpecificInstructions}</div>
+            <div class="value">Linen: ${job.linenInstructions}</div>
+          </div>
+          <div class="section">
+            <div class="label">Parking</div>
+            <div class="value">Space: ${job.parkingSpace}</div>
+            <div class="value">Instructions: ${job.parkingInstructions}</div>
+          </div>
+          ${job.assigned ? `
             <div class="section">
-              <div class="label">Room Type</div>
-              <div class="value">${job.roomType}</div>
+              <div class="label">Assigned Cleaner</div>
+              <div class="value">Name: <span class="crucial">${job.assigned.name}</span></div>
+              <div class="value">Team: ${job.assigned.team}</div>
+              <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
+              <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
+              <div class="value">Rating: (<span class="crucial">${job.assigned.rating.toFixed(1)}</span>)</div>
             </div>
-            <div class="section">
-              <div class="label">Schedule</div>
-              <div class="value">Date: <span class="crucial">${new Date(job.date).toLocaleDateString()}</span></div>
-              <div class="value">Time: <span class="crucial">${job.startTime} - ${job.dueTime}</span></div>
-              <div class="value">Guests: <span class="crucial">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span></div>
-            </div>
-            <div class="section">
-              <div class="label">Property Details</div>
-              <div class="value">Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
-              <div class="value">Manager: ${job.unitManagerName}</div>
-              <div className="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
-              <div class="value">Beds: ${job.bedInfo}</div>
-              <div class="value">Bathrooms: ${job.bathInfo}</div>
-            </div>
-            <div class="section">
-              <div class="label">WiFi & Amenities</div>
-              <div class="value">Network: ${job.wifiNetwork}</div>
-              <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
-              ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
-            </div>
-            <div class="section">
-              <div class="label">Cleaning Instructions</div>
-              <div class="value">Standard: ${job.permanentInstructions}</div>
-              <div class="value">This Week: ${job.weekSpecificInstructions}</div>
-              <div class="value">Linen: ${job.linenInstructions}</div>
-            </div>
-            <div class="section">
-              <div class="label">Parking</div>
-              <div class="value">Space: ${job.parkingSpace}</div>
-              <div class="value">Instructions: ${job.parkingInstructions}</div>
-            </div>
-            ${job.assigned ? `
-              <div class="section">
-                <div class="label">Assigned Cleaner</div>
-                <div class="value">Name: <span class="crucial">${job.assigned.name}</span></div>
-                <div class="value">Team: ${job.assigned.team}</div>
-                <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
-                <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
-                <div class="value">Rating: (<span class="crucial">${job.assigned.rating.toFixed(1)}</span>)</div>
-              </div>
-            ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
-          </body>
-        </html>
-      `;
-    };
+          ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
+        </body>
+      </html>
+    `;
 
     const printWindow = window.open('', '', 'height=800,width=600');
     if (printWindow) {
@@ -575,56 +456,13 @@ const ModernCleaningSystem = () => {
         <html>
           <head>
             <style>
-              body {
-                font-family: 'Helvetica Neue', Arial, sans-serif;
-                padding: 40px;
-                background-color: #f9fafb;
-                color: #1f2937;
-              }
-              .header {
-                font-size: 32px;
-                font-weight: 700;
-                color: #1e40af;
-                text-align: center;
-                margin-bottom: 30px;
-                border-bottom: 4px solid #3b82f6;
-                padding-bottom: 10px;
-                text-transform: uppercase;
-              }
-              .section {
-                margin: 25px 0;
-                padding: 20px;
-                background-color: #ffffff;
-                border-left: 6px solid #3b82f6;
-                border-radius: 8px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-              }
-              .label {
-                font-size: 18px;
-                font-weight: 600;
-                color: #1e40af;
-                margin-bottom: 10px;
-                text-transform: uppercase;
-              }
-              .value {
-                font-size: 16px;
-                color: #374151;
-                margin-left: 15px;
-                margin-bottom: 8px;
-                line-height: 1.5;
-              }
-              .highlight {
-                font-weight: 700;
-                color: #dc2626;
-                background-color: #fee2e2;
-                padding: 2px 8px;
-                border-radius: 4px;
-              }
-              .crucial {
-                font-size: 18px;
-                font-weight: 700;
-                color: #b91c1c;
-              }
+              body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; background-color: #f9fafb; color: #1f2937; }
+              .header { font-size: 32px; font-weight: 700; color: #1e40af; text-align: center; margin-bottom: 30px; border-bottom: 4px solid #3b82f6; padding-bottom: 10px; text-transform: uppercase; }
+              .section { margin: 25px 0; padding: 20px; background-color: #ffffff; border-left: 6px solid #3b82f6; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+              .label { font-size: 18px; font-weight: 600; color: #1e40af; margin-bottom: 10px; text-transform: uppercase; }
+              .value { font-size: 16px; color: #374151; margin-left: 15px; margin-bottom: 8px; line-height: 1.5; }
+              .highlight { font-weight: 700; color: #dc2626; background-color: #fee2e2; padding: 2px 8px; border-radius: 4px; }
+              .crucial { font-size: 18px; font-weight: 700; color: #b91c1c; }
               @page { margin: 0.5in; }
             </style>
           </head>
@@ -634,9 +472,7 @@ const ModernCleaningSystem = () => {
         </html>
       `);
       printWindow.document.close();
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
+      printWindow.print(); // Removed setTimeout for reliability
     } else {
       toast.error('Failed to open print window. Please check popup settings.', {
         position: 'top-right',
@@ -644,12 +480,7 @@ const ModernCleaningSystem = () => {
         className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
       });
     }
-    
-    setJobs(prevJobs => 
-      prevJobs.map(job => 
-        ids.includes(job.id) ? { ...job, status: 'printed' } : job
-      )
-    );
+    setJobs(prevJobs => prevJobs.map(job => ids.includes(job.id) ? { ...job, status: 'printed' } : job));
     setSelectedJobs(new Set());
   }, [jobs, selectedJobs]);
 
@@ -669,11 +500,7 @@ const ModernCleaningSystem = () => {
   }, [jobs, filters.cleaner, printCleanerSummary, printJobs]);
 
   const scheduleNotification = useCallback((job, scheduleData) => {
-    setJobs(prevJobs => 
-      prevJobs.map(j => 
-        j.id === job.id ? { ...j, scheduledNotification: scheduleData } : j
-      )
-    );
+    setJobs(prevJobs => prevJobs.map(j => j.id === job.id ? { ...j, scheduledNotification: scheduleData } : j));
     alert(`📅 Notification scheduled for ${job.assigned?.name}!`);
     setShowScheduleModal(null);
   }, []);
@@ -693,14 +520,13 @@ const ModernCleaningSystem = () => {
     setSelectedJobs(new Set());
   }, [jobs, selectedJobs, bulkSMSMessage]);
 
-  // PERFORMANCE OPTIMIZATION: Grid configuration
-  const columnsPerRow = 3; // Changed from 4 to 3 for better responsiveness
+  // PERFORMANCE: Grid configuration
+  const columnsPerRow = 3;
   const cardHeight = 320;
   const cardWidth = 400;
-  
   const rowCount = Math.ceil(filteredJobs.length / columnsPerRow);
-  
-  // PERFORMANCE OPTIMIZATION: Memoized grid data
+
+  // PERFORMANCE: Memoized grid data
   const gridData = useMemo(() => ({
     filteredJobs,
     selectedJobs,
@@ -739,7 +565,6 @@ const ModernCleaningSystem = () => {
                 <p className="text-gray-600 text-sm">Professional Cleaning Management</p>
               </div>
             </div>
-            
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setShowBulkSMSModal(true)}
@@ -766,47 +591,47 @@ const ModernCleaningSystem = () => {
             <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
             <div className="text-gray-600 text-sm">Total Jobs</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div className="bg-blue-500 h-2 rounded-full" style={{width: '100%'}}></div>
+              <div className="bg-blue-500 h-2 rounded-full" style={{ width: '100%' }}></div>
             </div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-md">
             <div className="text-2xl font-bold text-yellow-600">{stats.unassigned}</div>
             <div className="text-gray-600 text-sm">Unassigned</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div className="bg-yellow-500 h-2 rounded-full" style={{width: `${(stats.unassigned/stats.total)*100}%`}}></div>
+              <div className="bg-yellow-500 h-2 rounded-full" style={{ width: `${(stats.unassigned / stats.total) * 100}%` }}></div>
             </div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-md">
             <div className="text-2xl font-bold text-green-600">{stats.assigned}</div>
             <div className="text-gray-600 text-sm">Assigned</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div className="bg-green-500 h-2 rounded-full" style={{width: `${(stats.assigned/stats.total)*100}%`}}></div>
+              <div className="bg-green-500 h-2 rounded-full" style={{ width: `${(stats.assigned / stats.total) * 100}%` }}></div>
             </div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-md">
             <div className="text-2xl font-bold text-blue-600">{stats.printed}</div>
             <div className="text-gray-600 text-sm">Printed</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div className="bg-blue-500 h-2 rounded-full" style={{width: `${(stats.printed/stats.total)*100}%`}}></div>
+              <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${(stats.printed / stats.total) * 100}%` }}></div>
             </div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-md">
             <div className="text-2xl font-bold text-purple-600">{stats.availableCleaners}</div>
             <div className="text-gray-600 text-sm">Available</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div className="bg-purple-500 h-2 rounded-full" style={{width: '85%'}}></div>
+              <div className="bg-purple-500 h-2 rounded-full" style={{ width: '85%' }}></div>
             </div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-md">
             <div className="text-2xl font-bold text-indigo-600">{stats.scheduled}</div>
             <div className="text-gray-600 text-sm">Scheduled</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div className="bg-indigo-500 h-2 rounded-full" style={{width: `${(stats.scheduled/stats.total)*100}%`}}></div>
+              <div className="bg-indigo-500 h-2 rounded-full" style={{ width: `${(stats.scheduled / stats.total) * 100}%` }}></div>
             </div>
           </div>
         </div>
 
-        {/* Controls */}
+        {/* Controls - Fixed "Print Summary" button visibility */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
@@ -818,7 +643,6 @@ const ModernCleaningSystem = () => {
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 font-medium"
@@ -827,7 +651,6 @@ const ModernCleaningSystem = () => {
               Filters
               {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
-
             <div className="flex gap-2">
               <button
                 onClick={() => setShowAssignModal(true)}
@@ -848,14 +671,13 @@ const ModernCleaningSystem = () => {
               <button
                 onClick={() => filters.cleaner ? printJobsForCleaner() : printJobs()}
                 disabled={selectedJobs.size === 0 && !filters.cleaner}
-                className={`${selectedJobs.size > 0 || filters.cleaner ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white px-4 py-3 rounded-lg transition-colors flex items-center gap-2 font-medium`}
+                className={`${(selectedJobs.size > 0 || filters.cleaner) ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white px-4 py-3 rounded-lg transition-colors flex items-center gap-2 font-medium`}
               >
                 <Printer className="w-4 h-4" />
                 {filters.cleaner ? 'Print Cleaner Jobs' : `Print All (${selectedJobs.size})`}
               </button>
             </div>
           </div>
-
           {showFilters && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -863,7 +685,7 @@ const ModernCleaningSystem = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
                   <select
                     value={filters.location}
-                    onChange={(e) => setFilters({...filters, location: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, location: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">All Locations</option>
@@ -877,7 +699,7 @@ const ModernCleaningSystem = () => {
                   <input
                     type="date"
                     value={filters.date}
-                    onChange={(e) => setFilters({...filters, date: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, date: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -885,7 +707,7 @@ const ModernCleaningSystem = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                   <select
                     value={filters.status}
-                    onChange={(e) => setFilters({...filters, status: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="all">All Jobs</option>
@@ -897,7 +719,7 @@ const ModernCleaningSystem = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Cleaner</label>
                   <select
                     value={filters.cleaner}
-                    onChange={(e) => setFilters({...filters, cleaner: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, cleaner: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">All Cleaners</option>
@@ -911,7 +733,7 @@ const ModernCleaningSystem = () => {
           )}
         </div>
 
-        {/* PERFORMANCE OPTIMIZATION: Virtualized Job List */}
+        {/* PERFORMANCE: Virtualized Job List */}
         <div className="bg-white rounded-xl shadow-md p-4">
           {filteredJobs.length > 0 ? (
             <div className="h-[600px]">
@@ -957,7 +779,6 @@ const ModernCleaningSystem = () => {
                   <X className="w-6 h-6 text-gray-500" />
                 </button>
               </div>
-
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-4 rounded-lg">
@@ -977,7 +798,6 @@ const ModernCleaningSystem = () => {
                       </div>
                     </div>
                   </div>
-
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">Property Details</h3>
                     <div className="space-y-2 text-sm">
@@ -988,7 +808,6 @@ const ModernCleaningSystem = () => {
                       <div><strong>Bathrooms:</strong> {showJobDetail.bathInfo}</div>
                     </div>
                   </div>
-
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">WiFi & Amenities</h3>
                     <div className="space-y-2 text-sm">
@@ -1009,7 +828,6 @@ const ModernCleaningSystem = () => {
                     </div>
                   </div>
                 </div>
-
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">Cleaning Instructions</h3>
@@ -1019,7 +837,6 @@ const ModernCleaningSystem = () => {
                       <div><strong>Linen:</strong> {showJobDetail.linenInstructions}</div>
                     </div>
                   </div>
-
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">Parking</h3>
                     <div className="space-y-2 text-sm">
@@ -1027,7 +844,6 @@ const ModernCleaningSystem = () => {
                       <div><strong>Instructions:</strong> {showJobDetail.parkingInstructions}</div>
                     </div>
                   </div>
-
                   {showJobDetail.assigned ? (
                     <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                       <h3 className="font-semibold text-green-900 mb-3">Assigned Cleaner</h3>
@@ -1067,7 +883,6 @@ const ModernCleaningSystem = () => {
                   )}
                 </div>
               </div>
-
               <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
                 {showJobDetail.assigned && (
                   <>
@@ -1116,7 +931,6 @@ const ModernCleaningSystem = () => {
                   <X className="w-6 h-6 text-gray-500" />
                 </button>
               </div>
-
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {FAKE_DATA.cleaners.filter(c => c.available).map(cleaner => (
                   <div
@@ -1163,13 +977,11 @@ const ModernCleaningSystem = () => {
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
-
               <div className="space-y-4">
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  <strong>To:</strong> {showNotifyModal.assigned?.name}<br/>
+                  <strong>To:</strong> {showNotifyModal.assigned?.name}<br />
                   <strong>Job:</strong> {showNotifyModal.location} Room {showNotifyModal.room}
                 </div>
-
                 <div className="space-y-3">
                   <button
                     onClick={() => sendNotification(showNotifyModal, 'full')}
@@ -1206,19 +1018,16 @@ const ModernCleaningSystem = () => {
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
-
               <div className="space-y-4">
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
                   Sending to {[...new Set(jobs.filter(job => job.assigned && selectedJobs.has(job.id)).map(job => job.assigned.id))].length} cleaners
                 </div>
-
                 <textarea
                   value={bulkSMSMessage}
                   onChange={(e) => setBulkSMSMessage(e.target.value)}
                   placeholder="Enter your message..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-32 resize-none"
                 />
-
                 <button
                   onClick={sendBulkSMS}
                   disabled={!bulkSMSMessage.trim()}
@@ -1247,13 +1056,11 @@ const ModernCleaningSystem = () => {
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
-
               <div className="space-y-4">
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  <strong>Job:</strong> {showScheduleModal.location} Room {showScheduleModal.room}<br/>
+                  <strong>Job:</strong> {showScheduleModal.location} Room {showScheduleModal.room}<br />
                   <strong>Cleaner:</strong> {showScheduleModal.assigned?.name}
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Schedule Date & Time</label>
                   <input
@@ -1261,7 +1068,6 @@ const ModernCleaningSystem = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Message Type</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -1270,7 +1076,6 @@ const ModernCleaningSystem = () => {
                     <option>Both Email & SMS</option>
                   </select>
                 </div>
-
                 <button
                   onClick={() => scheduleNotification(showScheduleModal, { date: new Date(), type: 'email' })}
                   className="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-2"
