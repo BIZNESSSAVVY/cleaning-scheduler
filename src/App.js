@@ -523,7 +523,7 @@ const ModernCleaningSystem = () => {
               .job-item:hover { background: #edf2f7; }
               .highlight { color: #e53e3e; font-weight: 600; }
               .rating { color: #ecc94b; font-weight: 600; }
-              .card { max-width: 600px; background: rgba(255, 255, 255, 0.95); border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); padding: 20px; backdrop-filter: blur(5px); margin-bottom: 20px; }
+              .card { max-width: 600px; background: rgba(255, 255, 255, 0.95); border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); padding: 20px; backdrop-filter: blur(5px); margin-bottom: 20px; page-break-before: always; }
               .card-header { background: linear-gradient(135deg, #4a90e2, #63b3ed); color: #ffffff; padding: 12px; text-align: center; font-size: 20px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -20px -20px 15px -20px; position: relative; }
               .card-header::before { content: 'Savvy OS'; font-family: 'Roboto', sans-serif; font-size: 12px; color: #dbeafe; position: absolute; top: 5px; left: 15px; }
               .card-section { margin-bottom: 12px; }
