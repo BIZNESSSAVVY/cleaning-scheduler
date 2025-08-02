@@ -16,7 +16,7 @@ const FAKE_DATA = (() => {
     name: `${['Sarah', 'Mike', 'Jessica', 'David', 'Maria', 'John', 'Lisa', 'Carlos', 'Amanda', 'Robert'][i % 10]} ${['Johnson', 'Smith', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor', 'Anderson'][Math.floor(i / 10)]}`,
     team: `Team ${Math.floor(i / 10) + 1}`,
     phone: `(443) ${String(Math.floor(Math.random() * 900) + 100)}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-    email: `${['sarah', 'mike', 'jessica', 'david', 'maria', 'john', 'lisa', 'carlos', 'amanda', 'robert'][i % 10]}.${['johnson', 'smith', 'williams', 'brown', 'davis', 'miller', 'wilson', 'moore', 'taylor', 'anderson'][Math.floor(i / 10)]}@cleanteam.com`,
+    email: `${['sarah', 'mike', 'jessica', 'david', 'maria', 'john', 'lisa', 'carlos', 'amanda', 'robert'][i % 10]}.${['johnson', 'smith', 'williams', 'brown', 'davis', 'milller', 'wilson', 'moore', 'taylor', 'anderson'][Math.floor(i / 10)]}@cleanteam.com`,
     available: Math.random() > 0.2,
     assignedJobs: Math.floor(Math.random() * 5),
     rating: 4 + Math.random()
@@ -339,6 +339,7 @@ const ModernCleaningSystem = () => {
             .job-item { font-size: 16px; margin-bottom: 10px; color: #374151; }
             .info { font-size: 16px; color: #374151; margin-bottom: 10px; }
             .rating { font-size: 16px; color: #f59e0b; font-weight: 600; }
+            .highlight { font-weight: 700; color: #dc2626; background-color: #fee2e2; padding: 2px 8px; border-radius: 4px; }
             @page { margin: 0.5in; }
           </style>
         </head>
@@ -348,7 +349,7 @@ const ModernCleaningSystem = () => {
           <div class="info">Total Jobs: ${cleanerJobs.length}</div>
           <div class="job-list">
             <div class="subheader">Job Schedule</div>
-            ${sortedJobs.map((job, index) => `<div class="job-item">${index + 1}) ${job.location} ${job.room} - ${job.startTime}</div>`).join('')}
+            ${sortedJobs.map((job, index) => `<div class="job-item">${index + 1}) ${job.location} ${job.room} - ${job.startTime} <span class="highlight">Lock Code: ${job.lockCode}</span></div>`).join('')}
           </div>
           <div class="info">Phone: ${cleaner.phone}</div>
           <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
@@ -360,7 +361,7 @@ const ModernCleaningSystem = () => {
     if (printWindow) {
       printWindow.document.write(generateSummaryTemplate());
       printWindow.document.close();
-      printWindow.print(); // Removed setTimeout for reliability
+      printWindow.print();
     } else {
       toast.error('Failed to open print window. Please check popup settings.', {
         position: 'top-right',
@@ -472,7 +473,7 @@ const ModernCleaningSystem = () => {
         </html>
       `);
       printWindow.document.close();
-      printWindow.print(); // Removed setTimeout for reliability
+      printWindow.print();
     } else {
       toast.error('Failed to open print window. Please check popup settings.', {
         position: 'top-right',
@@ -495,8 +496,94 @@ const ModernCleaningSystem = () => {
       toast.info('No jobs assigned to this cleaner.');
       return;
     }
+
+    // Print summary first
     printCleanerSummary();
-    printJobs(cleanerJobs);
+
+    // Batch job details in a single print operation
+    if (cleanerJobs.length > 0) {
+      const printWindow = window.open('', '', 'height=800,width=600');
+      if (printWindow) {
+        const jobsToPrint = jobs.filter(job => cleanerJobs.includes(job.id));
+        const generatePrintTemplate = (job) => `
+          <div class="header">🏨 ${job.location} - Room ${job.room}</div>
+          <div class="section">
+            <div class="label">Room Type</div>
+            <div class="value">${job.roomType}</div>
+          </div>
+          <div class="section">
+            <div class="label">Schedule</div>
+            <div class="value">Date: <span class="crucial">${new Date(job.date).toLocaleDateString()}</span></div>
+            <div class="value">Time: <span class="crucial">${job.startTime} - ${job.dueTime}</span></div>
+            <div class="value">Guests: <span class="crucial">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span></div>
+          </div>
+          <div class="section">
+            <div class="label">Property Details</div>
+            <div class="value">Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
+            <div class="value">Manager: ${job.unitManagerName}</div>
+            <div className="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
+            <div class="value">Beds: ${job.bedInfo}</div>
+            <div class="value">Bathrooms: ${job.bathInfo}</div>
+          </div>
+          <div class="section">
+            <div class="label">WiFi & Amenities</div>
+            <div class="value">Network: ${job.wifiNetwork}</div>
+            <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
+            ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
+          </div>
+          <div class="section">
+            <div class="label">Cleaning Instructions</div>
+            <div class="value">Standard: ${job.permanentInstructions}</div>
+            <div class="value">This Week: ${job.weekSpecificInstructions}</div>
+            <div class="value">Linen: ${job.linenInstructions}</div>
+          </div>
+          <div class="section">
+            <div class="label">Parking</div>
+            <div class="value">Space: ${job.parkingSpace}</div>
+            <div class="value">Instructions: ${job.parkingInstructions}</div>
+          </div>
+          ${job.assigned ? `
+            <div class="section">
+              <div class="label">Assigned Cleaner</div>
+              <div class="value">Name: <span class="crucial">${job.assigned.name}</span></div>
+              <div class="value">Team: ${job.assigned.team}</div>
+              <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
+              <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
+              <div class="value">Rating: (<span class="crucial">${job.assigned.rating.toFixed(1)}</span>)</div>
+            </div>
+          ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
+          <div style="page-break-after: always;"></div>
+        `;
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; background-color: #f9fafb; color: #1f2937; }
+                .header { font-size: 32px; font-weight: 700; color: #1e40af; text-align: center; margin-bottom: 30px; border-bottom: 4px solid #3b82f6; padding-bottom: 10px; text-transform: uppercase; }
+                .section { margin: 25px 0; padding: 20px; background-color: #ffffff; border-left: 6px solid #3b82f6; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+                .label { font-size: 18px; font-weight: 600; color: #1e40af; margin-bottom: 10px; text-transform: uppercase; }
+                .value { font-size: 16px; color: #374151; margin-left: 15px; margin-bottom: 8px; line-height: 1.5; }
+                .highlight { font-weight: 700; color: #dc2626; background-color: #fee2e2; padding: 2px 8px; border-radius: 4px; }
+                .crucial { font-size: 18px; font-weight: 700; color: #b91c1c; }
+                @page { margin: 0.5in; }
+              </style>
+            </head>
+            <body>
+              ${jobsToPrint.map(generatePrintTemplate).join('')}
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      } else {
+        toast.error('Failed to open print window. Please check popup settings.', {
+          position: 'top-right',
+          autoClose: 3000,
+          className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+        });
+      }
+    }
   }, [jobs, filters.cleaner, printCleanerSummary, printJobs]);
 
   const scheduleNotification = useCallback((job, scheduleData) => {
