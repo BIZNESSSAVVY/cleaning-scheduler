@@ -332,27 +332,38 @@ const ModernCleaningSystem = () => {
       <html>
         <head>
           <style>
-            body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; background-color: #f9fafb; color: #1f2937; }
-            .header { font-size: 28px; font-weight: 700; color: #1e40af; text-align: center; margin-bottom: 20px; border-bottom: 4px solid #3b82f6; padding-bottom: 10px; text-transform: uppercase; }
-            .subheader { font-size: 20px; font-weight: 600; color: #374151; margin-bottom: 15px; }
-            .job-list { margin: 20px 0; padding: 15px; background-color: #ffffff; border-left: 6px solid #3b82f6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-            .job-item { font-size: 16px; margin-bottom: 10px; color: #374151; }
-            .info { font-size: 16px; color: #374151; margin-bottom: 10px; }
-            .rating { font-size: 16px; color: #f59e0b; font-weight: 600; }
-            .highlight { font-weight: 700; color: #dc2626; background-color: #fee2e2; padding: 2px 8px; border-radius: 4px; }
-            @page { margin: 0.5in; }
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+            body { font-family: 'Inter', sans-serif; padding: 30px; background: #f5f7fa; color: #1a202c; margin: 0; }
+            .container { max-width: 800px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); overflow: hidden; }
+            .header { background: linear-gradient(135deg, #4a90e2, #63b3ed); color: #ffffff; padding: 20px; text-align: center; font-size: 24px; font-weight: 700; border-bottom: 2px solid #3b82f6; }
+            .info { padding: 20px; display: grid; gap: 10px; font-size: 14px; color: #4a5568; }
+            .job-list { padding: 20px; background: #f9fafb; border-top: 1px solid #edf2f7; }
+            .job-item { display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: #2d3748; border-bottom: 1px solid #edf2f7; }
+            .highlight { color: #e53e3e; font-weight: 600; margin-left: 10px; }
+            .rating { color: #ecc94b; font-weight: 600; }
+            @page { margin: 0.5in; size: A4; }
           </style>
         </head>
         <body>
-          <div class="header">${cleaner.name} - ${cleaner.team}</div>
-          <div class="info">Today: ${new Date().toLocaleDateString()}</div>
-          <div class="info">Total Jobs: ${cleanerJobs.length}</div>
-          <div class="job-list">
-            <div class="subheader">Job Schedule</div>
-            ${sortedJobs.map((job, index) => `<div class="job-item">${index + 1}) ${job.location} ${job.room} - ${job.startTime} <span class="highlight">Lock Code: ${job.lockCode}</span></div>`).join('')}
+          <div class="container">
+            <div class="header">${cleaner.name} - ${cleaner.team}</div>
+            <div class="info">
+              <div>Today: ${new Date().toLocaleDateString()}</div>
+              <div>Total Jobs: ${cleanerJobs.length}</div>
+              <div>Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
+              <div>Phone: ${cleaner.phone}</div>
+              <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
+            </div>
+            <div class="job-list">
+              <div style="font-weight: 600; color: #2d3748; margin-bottom: 10px;">Job Schedule</div>
+              ${sortedJobs.map((job, index) => `
+                <div class="job-item">
+                  <span>${index + 1}) ${job.location} Room ${job.room} - ${job.startTime}</span>
+                  <span class="highlight">Lock: ${job.lockCode}</span>
+                </div>
+              `).join('')}
+            </div>
           </div>
-          <div class="info">Phone: ${cleaner.phone}</div>
-          <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
         </body>
       </html>
     `;
@@ -385,69 +396,49 @@ const ModernCleaningSystem = () => {
     }
 
     const generatePrintTemplate = (job) => `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; background-color: #f9fafb; color: #1f2937; }
-            .header { font-size: 32px; font-weight: 700; color: #1e40af; text-align: center; margin-bottom: 30px; border-bottom: 4px solid #3b82f6; padding-bottom: 10px; text-transform: uppercase; }
-            .section { margin: 25px 0; padding: 20px; background-color: #ffffff; border-left: 6px solid #3b82f6; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-            .label { font-size: 18px; font-weight: 600; color: #1e40af; margin-bottom: 10px; text-transform: uppercase; }
-            .value { font-size: 16px; color: #374151; margin-left: 15px; margin-bottom: 8px; line-height: 1.5; }
-            .highlight { font-weight: 700; color: #dc2626; background-color: #fee2e2; padding: 2px 8px; border-radius: 4px; }
-            .crucial { font-size: 18px; font-weight: 700; color: #b91c1c; }
-            @page { margin: 0.5in; }
-          </style>
-        </head>
-        <body>
-          <div class="header">🏨 ${job.location} - Room ${job.room}</div>
+      <div class="card">
+        <div class="header">${job.location} - Room ${job.room}</div>
+        <div class="section">
+          <div class="label">Schedule</div>
+          <div class="value">${new Date(job.date).toLocaleDateString()} | ${job.startTime} - ${job.dueTime}</div>
+          <div class="value">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</div>
+        </div>
+        <div class="section">
+          <div class="label">Details</div>
+          <div class="value">Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
+          <div class="value">Manager: ${job.unitManagerName}</div>
+          <div class="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
+          <div class="value">Beds: ${job.bedInfo}</div>
+          <div class="value">Baths: ${job.bathInfo}</div>
+        </div>
+        <div class="section">
+          <div class="label">WiFi</div>
+          <div class="value">Network: ${job.wifiNetwork}</div>
+          <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
+          ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
+        </div>
+        <div class="section">
+          <div class="label">Instructions</div>
+          <div class="value">Standard: ${job.permanentInstructions}</div>
+          <div class="value">This Week: ${job.weekSpecificInstructions}</div>
+          <div class="value">Linen: ${job.linenInstructions}</div>
+        </div>
+        <div class="section">
+          <div class="label">Parking</div>
+          <div class="value">Space: ${job.parkingSpace}</div>
+          <div class="value">Instructions: ${job.parkingInstructions}</div>
+        </div>
+        ${job.assigned ? `
           <div class="section">
-            <div class="label">Room Type</div>
-            <div class="value">${job.roomType}</div>
+            <div class="label">Cleaner</div>
+            <div class="value">Name: ${job.assigned.name}</div>
+            <div class="value">Team: ${job.assigned.team}</div>
+            <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
+            <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
+            <div class="value">Rating: ${job.assigned.rating.toFixed(1)}★</div>
           </div>
-          <div class="section">
-            <div class="label">Schedule</div>
-            <div class="value">Date: <span class="crucial">${new Date(job.date).toLocaleDateString()}</span></div>
-            <div class="value">Time: <span class="crucial">${job.startTime} - ${job.dueTime}</span></div>
-            <div class="value">Guests: <span class="crucial">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span></div>
-          </div>
-          <div class="section">
-            <div class="label">Property Details</div>
-            <div class="value">Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
-            <div class="value">Manager: ${job.unitManagerName}</div>
-            <div className="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
-            <div class="value">Beds: ${job.bedInfo}</div>
-            <div class="value">Bathrooms: ${job.bathInfo}</div>
-          </div>
-          <div class="section">
-            <div class="label">WiFi & Amenities</div>
-            <div class="value">Network: ${job.wifiNetwork}</div>
-            <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
-            ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
-          </div>
-          <div class="section">
-            <div class="label">Cleaning Instructions</div>
-            <div class="value">Standard: ${job.permanentInstructions}</div>
-            <div class="value">This Week: ${job.weekSpecificInstructions}</div>
-            <div class="value">Linen: ${job.linenInstructions}</div>
-          </div>
-          <div class="section">
-            <div class="label">Parking</div>
-            <div class="value">Space: ${job.parkingSpace}</div>
-            <div class="value">Instructions: ${job.parkingInstructions}</div>
-          </div>
-          ${job.assigned ? `
-            <div class="section">
-              <div class="label">Assigned Cleaner</div>
-              <div class="value">Name: <span class="crucial">${job.assigned.name}</span></div>
-              <div class="value">Team: ${job.assigned.team}</div>
-              <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
-              <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
-              <div class="value">Rating: (<span class="crucial">${job.assigned.rating.toFixed(1)}</span>)</div>
-            </div>
-          ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
-        </body>
-      </html>
+        ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
+      </div>
     `;
 
     const printWindow = window.open('', '', 'height=800,width=600');
@@ -457,14 +448,16 @@ const ModernCleaningSystem = () => {
         <html>
           <head>
             <style>
-              body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; background-color: #f9fafb; color: #1f2937; }
-              .header { font-size: 32px; font-weight: 700; color: #1e40af; text-align: center; margin-bottom: 30px; border-bottom: 4px solid #3b82f6; padding-bottom: 10px; text-transform: uppercase; }
-              .section { margin: 25px 0; padding: 20px; background-color: #ffffff; border-left: 6px solid #3b82f6; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-              .label { font-size: 18px; font-weight: 600; color: #1e40af; margin-bottom: 10px; text-transform: uppercase; }
-              .value { font-size: 16px; color: #374151; margin-left: 15px; margin-bottom: 8px; line-height: 1.5; }
-              .highlight { font-weight: 700; color: #dc2626; background-color: #fee2e2; padding: 2px 8px; border-radius: 4px; }
-              .crucial { font-size: 18px; font-weight: 700; color: #b91c1c; }
-              @page { margin: 0.5in; }
+              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+              body { font-family: 'Inter', sans-serif; padding: 20px; background: #f5f7fa; margin: 0; }
+              .card { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); padding: 20px; }
+              .header { background: linear-gradient(135deg, #4a90e2, #63b3ed); color: #ffffff; padding: 10px; text-align: center; font-size: 20px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -20px -20px 20px -20px; }
+              .section { margin-bottom: 15px; }
+              .label { font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 5px; text-transform: uppercase; }
+              .value { font-size: 13px; color: #2d3748; line-height: 1.4; margin-left: 10px; }
+              .highlight { color: #e53e3e; font-weight: 600; }
+              @page { margin: 0.5in; size: A4; }
+              @media print { body { padding: 0; } .card { box-shadow: none; margin: 0; padding: 15px; } }
             </style>
           </head>
           <body>
@@ -497,94 +490,112 @@ const ModernCleaningSystem = () => {
       return;
     }
 
-    // Print summary first
-    printCleanerSummary();
+    const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
+    const jobsToPrint = jobs.filter(job => cleanerJobs.includes(job.id));
 
-    // Batch job details in a single print operation
-    if (cleanerJobs.length > 0) {
-      const printWindow = window.open('', '', 'height=800,width=600');
-      if (printWindow) {
-        const jobsToPrint = jobs.filter(job => cleanerJobs.includes(job.id));
-        const generatePrintTemplate = (job) => `
-          <div class="header">🏨 ${job.location} - Room ${job.room}</div>
-          <div class="section">
-            <div class="label">Room Type</div>
-            <div class="value">${job.roomType}</div>
-          </div>
-          <div class="section">
-            <div class="label">Schedule</div>
-            <div class="value">Date: <span class="crucial">${new Date(job.date).toLocaleDateString()}</span></div>
-            <div class="value">Time: <span class="crucial">${job.startTime} - ${job.dueTime}</span></div>
-            <div class="value">Guests: <span class="crucial">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span></div>
-          </div>
-          <div class="section">
-            <div class="label">Property Details</div>
-            <div class="value">Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
-            <div class="value">Manager: ${job.unitManagerName}</div>
-            <div className="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
-            <div class="value">Beds: ${job.bedInfo}</div>
-            <div class="value">Bathrooms: ${job.bathInfo}</div>
-          </div>
-          <div class="section">
-            <div class="label">WiFi & Amenities</div>
-            <div class="value">Network: ${job.wifiNetwork}</div>
-            <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
-            ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
-          </div>
-          <div class="section">
-            <div class="label">Cleaning Instructions</div>
-            <div class="value">Standard: ${job.permanentInstructions}</div>
-            <div class="value">This Week: ${job.weekSpecificInstructions}</div>
-            <div class="value">Linen: ${job.linenInstructions}</div>
-          </div>
-          <div class="section">
-            <div class="label">Parking</div>
-            <div class="value">Space: ${job.parkingSpace}</div>
-            <div class="value">Instructions: ${job.parkingInstructions}</div>
-          </div>
-          ${job.assigned ? `
-            <div class="section">
-              <div class="label">Assigned Cleaner</div>
-              <div class="value">Name: <span class="crucial">${job.assigned.name}</span></div>
-              <div class="value">Team: ${job.assigned.team}</div>
-              <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
-              <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
-              <div class="value">Rating: (<span class="crucial">${job.assigned.rating.toFixed(1)}</span>)</div>
+    const printWindow = window.open('', '', 'height=800,width=600');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+              body { font-family: 'Inter', sans-serif; padding: 20px; background: #f5f7fa; margin: 0; }
+              .summary { max-width: 800px; margin: 0 auto 20px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 20px; }
+              .summary-header { background: linear-gradient(135deg, #4a90e2, #63b3ed); color: #ffffff; padding: 15px; text-align: center; font-size: 24px; font-weight: 700; border-bottom: 2px solid #3b82f6; border-radius: 8px 8px 0 0; margin: -20px -20px 20px -20px; }
+              .summary-info { padding: 10px 0; display: grid; gap: 5px; font-size: 14px; color: #4a5568; }
+              .job-list { padding: 20px; background: #f9fafb; border-top: 1px solid #edf2f7; }
+              .job-item { display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: #2d3748; border-bottom: 1px solid #edf2f7; }
+              .highlight { color: #e53e3e; font-weight: 600; margin-left: 10px; }
+              .rating { color: #ecc94b; font-weight: 600; }
+              .card { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); padding: 20px; }
+              .card-header { background: linear-gradient(135deg, #4a90e2, #63b3ed); color: #ffffff; padding: 10px; text-align: center; font-size: 20px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -20px -20px 15px -20px; }
+              .card-section { margin-bottom: 10px; }
+              .card-label { font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 5px; text-transform: uppercase; }
+              .card-value { font-size: 13px; color: #2d3748; line-height: 1.4; margin-left: 10px; }
+              @page { margin: 0.5in; size: A4; }
+              @media print { body { padding: 0; } .summary, .card { box-shadow: none; margin: 0; padding: 15px; } .summary { page-break-after: always; } }
+            </style>
+          </head>
+          <body>
+            <div class="summary">
+              <div class="summary-header">${cleaner.name} - ${cleaner.team}</div>
+              <div class="summary-info">
+                <div>Today: ${new Date().toLocaleDateString()}</div>
+                <div>Total Jobs: ${cleanerJobs.length}</div>
+                <div>Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
+                <div>Phone: ${cleaner.phone}</div>
+                <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
+              </div>
+              <div class="job-list">
+                <div style="font-weight: 600; color: #2d3748; margin-bottom: 10px;">Job Schedule</div>
+                ${jobsToPrint.map((job, index) => `
+                  <div class="job-item">
+                    <span>${index + 1}) ${job.location} Room ${job.room} - ${job.startTime}</span>
+                    <span class="highlight">Lock: ${job.lockCode}</span>
+                  </div>
+                `).join('')}
+              </div>
             </div>
-          ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
-          <div style="page-break-after: always;"></div>
-        `;
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <style>
-                body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; background-color: #f9fafb; color: #1f2937; }
-                .header { font-size: 32px; font-weight: 700; color: #1e40af; text-align: center; margin-bottom: 30px; border-bottom: 4px solid #3b82f6; padding-bottom: 10px; text-transform: uppercase; }
-                .section { margin: 25px 0; padding: 20px; background-color: #ffffff; border-left: 6px solid #3b82f6; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-                .label { font-size: 18px; font-weight: 600; color: #1e40af; margin-bottom: 10px; text-transform: uppercase; }
-                .value { font-size: 16px; color: #374151; margin-left: 15px; margin-bottom: 8px; line-height: 1.5; }
-                .highlight { font-weight: 700; color: #dc2626; background-color: #fee2e2; padding: 2px 8px; border-radius: 4px; }
-                .crucial { font-size: 18px; font-weight: 700; color: #b91c1c; }
-                @page { margin: 0.5in; }
-              </style>
-            </head>
-            <body>
-              ${jobsToPrint.map(generatePrintTemplate).join('')}
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-      } else {
-        toast.error('Failed to open print window. Please check popup settings.', {
-          position: 'top-right',
-          autoClose: 3000,
-          className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
-        });
-      }
+            ${jobsToPrint.map(job => `
+              <div class="card">
+                <div class="card-header">${job.location} - Room ${job.room}</div>
+                <div class="card-section">
+                  <div class="card-label">Schedule</div>
+                  <div class="card-value">${new Date(job.date).toLocaleDateString()} | ${job.startTime} - ${job.dueTime}</div>
+                  <div class="card-value">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</div>
+                </div>
+                <div class="card-section">
+                  <div class="card-label">Details</div>
+                  <div class="card-value">Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
+                  <div class="card-value">Manager: ${job.unitManagerName}</div>
+                  <div class="card-value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
+                  <div class="card-value">Beds: ${job.bedInfo}</div>
+                  <div class="card-value">Baths: ${job.bathInfo}</div>
+                </div>
+                <div class="card-section">
+                  <div class="card-label">WiFi</div>
+                  <div class="card-value">Network: ${job.wifiNetwork}</div>
+                  <div class="card-value">Password: <span class="highlight">${job.wifiPassword}</span></div>
+                  ${job.wifiIncluded ? '<div class="card-value">WiFi Included</div>' : ''}
+                </div>
+                <div class="card-section">
+                  <div class="card-label">Instructions</div>
+                  <div class="card-value">Standard: ${job.permanentInstructions}</div>
+                  <div class="card-value">This Week: ${job.weekSpecificInstructions}</div>
+                  <div class="card-value">Linen: ${job.linenInstructions}</div>
+                </div>
+                <div class="card-section">
+                  <div class="card-label">Parking</div>
+                  <div class="card-value">Space: ${job.parkingSpace}</div>
+                  <div class="card-value">Instructions: ${job.parkingInstructions}</div>
+                </div>
+                ${job.assigned ? `
+                  <div class="card-section">
+                    <div class="card-label">Cleaner</div>
+                    <div class="card-value">Name: ${job.assigned.name}</div>
+                    <div class="card-value">Team: ${job.assigned.team}</div>
+                    <div class="card-value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
+                    <div class="card-value">Email: <span class="highlight">${job.assigned.email}</span></div>
+                    <div class="card-value">Rating: ${job.assigned.rating.toFixed(1)}★</div>
+                  </div>
+                ` : '<div class="card-section"><div class="card-value">Not Assigned</div></div>'}
+              </div>
+            `).join('')}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    } else {
+      toast.error('Failed to open print window. Please check popup settings.', {
+        position: 'top-right',
+        autoClose: 3000,
+        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+      });
     }
-  }, [jobs, filters.cleaner, printCleanerSummary, printJobs]);
+  }, [jobs, filters.cleaner, printCleanerSummary]);
 
   const scheduleNotification = useCallback((job, scheduleData) => {
     setJobs(prevJobs => prevJobs.map(j => j.id === job.id ? { ...j, scheduledNotification: scheduleData } : j));
@@ -1005,39 +1016,39 @@ const ModernCleaningSystem = () => {
       {/* Assign Modal */}
       {showAssignModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
+          <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">
                   Assign Jobs ({selectedJobs.size} selected)
                 </h2>
                 <button
                   onClick={() => setShowAssignModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  class="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <X className="w-6 h-6 text-gray-500" />
+                  <X class="w-6 h-6 text-gray-500" />
                 </button>
               </div>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div class="space-y-3 max-h-96 overflow-y-auto">
                 {FAKE_DATA.cleaners.filter(c => c.available).map(cleaner => (
                   <div
                     key={cleaner.id}
                     onClick={() => assignJobs(cleaner.id)}
-                    className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-all"
+                    class="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-all"
                   >
-                    <div className="flex items-center justify-between">
+                    <div class="flex items-center justify-between">
                       <div>
-                        <div className="font-semibold text-gray-900">{cleaner.name}</div>
-                        <div className="text-sm text-gray-600">{cleaner.team}</div>
-                        <div className="text-xs text-gray-500">{cleaner.phone}</div>
+                        <div class="font-semibold text-gray-900">{cleaner.name}</div>
+                        <div class="text-sm text-gray-600">{cleaner.team}</div>
+                        <div class="text-xs text-gray-500">{cleaner.phone}</div>
                       </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 text-yellow-500">
+                      <div class="text-right">
+                        <div class="flex items-center gap-1 text-yellow-500">
                           {[...Array(Math.floor(cleaner.rating))].map((_, i) => (
-                            <Star key={i} className="w-3 h-3 fill-current" />
+                            <Star key={i} class="w-3 h-3 fill-current" />
                           ))}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div class="text-xs text-gray-500 mt-1">
                           {cleaner.assignedJobs} current jobs
                         </div>
                       </div>
@@ -1052,36 +1063,36 @@ const ModernCleaningSystem = () => {
 
       {/* Notification Modal */}
       {showNotifyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Send Notification</h2>
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div class="bg-white rounded-2xl max-w-md w-full">
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Send Notification</h2>
                 <button
                   onClick={() => setShowNotifyModal(null)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  class="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X class="w-5 h-5 text-gray-500" />
                 </button>
               </div>
-              <div className="space-y-4">
-                <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  <strong>To:</strong> {showNotifyModal.assigned?.name}<br />
-                  <strong>Job:</strong> {showNotifyModal.location} Room {showNotifyModal.room}
+              <div class="space-y-4">
+                <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                  <strong>To:</strong> ${showNotifyModal.assigned?.name}<br />
+                  <strong>Job:</strong> ${showNotifyModal.location} Room ${showNotifyModal.room}
                 </div>
-                <div className="space-y-3">
+                <div class="space-y-3">
                   <button
                     onClick={() => sendNotification(showNotifyModal, 'full')}
-                    className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
+                    class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
                   >
-                    <Mail className="w-5 h-5" />
+                    <Mail class="w-5 h-5" />
                     Send Full Email Details
                   </button>
                   <button
                     onClick={() => sendNotification(showNotifyModal, 'sms')}
-                    className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
+                    class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
                   >
-                    <MessageSquare className="w-5 h-5" />
+                    <MessageSquare class="w-5 h-5" />
                     Send Quick SMS
                   </button>
                 </div>
@@ -1093,34 +1104,34 @@ const ModernCleaningSystem = () => {
 
       {/* Bulk SMS Modal */}
       {showBulkSMSModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Bulk SMS</h2>
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div class="bg-white rounded-2xl max-w-md w-full">
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Bulk SMS</h2>
                 <button
                   onClick={() => setShowBulkSMSModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  class="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X class="w-5 h-5 text-gray-500" />
                 </button>
               </div>
-              <div className="space-y-4">
-                <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  Sending to {[...new Set(jobs.filter(job => job.assigned && selectedJobs.has(job.id)).map(job => job.assigned.id))].length} cleaners
+              <div class="space-y-4">
+                <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                  Sending to ${[...new Set(jobs.filter(job => job.assigned && selectedJobs.has(job.id)).map(job => job.assigned.id))].length} cleaners
                 </div>
                 <textarea
                   value={bulkSMSMessage}
                   onChange={(e) => setBulkSMSMessage(e.target.value)}
                   placeholder="Enter your message..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-32 resize-none"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-32 resize-none"
                 />
                 <button
                   onClick={sendBulkSMS}
                   disabled={!bulkSMSMessage.trim()}
-                  className={`w-full ${bulkSMSMessage.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2`}
+                  class="w-full ${bulkSMSMessage.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
                 >
-                  <Send className="w-5 h-5" />
+                  <Send class="w-5 h-5" />
                   Send Bulk SMS
                 </button>
               </div>
@@ -1131,33 +1142,33 @@ const ModernCleaningSystem = () => {
 
       {/* Schedule Modal */}
       {showScheduleModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Schedule Notification</h2>
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div class="bg-white rounded-2xl max-w-md w-full">
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Schedule Notification</h2>
                 <button
                   onClick={() => setShowScheduleModal(null)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  class="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X class="w-5 h-5 text-gray-500" />
                 </button>
               </div>
-              <div className="space-y-4">
-                <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  <strong>Job:</strong> {showScheduleModal.location} Room {showScheduleModal.room}<br />
-                  <strong>Cleaner:</strong> {showScheduleModal.assigned?.name}
+              <div class="space-y-4">
+                <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                  <strong>Job:</strong> ${showScheduleModal.location} Room ${showScheduleModal.room}<br />
+                  <strong>Cleaner:</strong> ${showScheduleModal.assigned?.name}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Schedule Date & Time</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Schedule Date & Time</label>
                   <input
                     type="datetime-local"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Message Type</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Message Type</label>
+                  <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option>Email Reminder</option>
                     <option>SMS Reminder</option>
                     <option>Both Email & SMS</option>
@@ -1165,9 +1176,9 @@ const ModernCleaningSystem = () => {
                 </div>
                 <button
                   onClick={() => scheduleNotification(showScheduleModal, { date: new Date(), type: 'email' })}
-                  className="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-2"
+                  class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-2"
                 >
-                  <Calendar className="w-5 h-5" />
+                  <Calendar class="w-5 h-5" />
                   Schedule Notification
                 </button>
               </div>
