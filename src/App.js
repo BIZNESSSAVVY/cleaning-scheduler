@@ -4,7 +4,7 @@ import { debounce } from 'lodash';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { unstable_batchedUpdates } from 'react-dom';
-import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award, brush } from 'lucide-react';
+import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
 
 // Static data generation (unchanged)
 const FAKE_DATA = (() => {
@@ -278,6 +278,17 @@ const ModernCleaningSystem = () => {
     setShowNotifyModal(job);
   }, []);
 
+  const sendNotification = useCallback((job, messageType = 'full') => {
+    if (!job.assigned) return; // Prevent notification if no cleaner assigned
+    const message = messageType === 'full' ? 
+      `Job Assignment - ${job.location} Location: ${job.location}, Room: ${job.room}` :
+      `${job.assigned.name}: ${job.location} Room ${job.room}, ${job.startTime}`;
+    
+    console.log('Notification sent:', message);
+    alert(`✅ ${messageType === 'full' ? 'Email' : 'SMS'} sent to ${job.assigned.name}!`);
+    setShowNotifyModal(null);
+  }, []);
+
   const assignJobs = useCallback((cleanerId) => {
     const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
     const jobIds = Array.from(selectedJobs);
@@ -313,212 +324,334 @@ const ModernCleaningSystem = () => {
     });
   }, [jobs, selectedJobs]);
 
-  // ... (keep all previous code unchanged until printJobs function) ...
+  const printCleanerSummary = useCallback(() => {
+    const cleanerId = Number(filters.cleaner);
+    if (!cleanerId) {
+      toast.error('Please select a cleaner to print summary.', {
+        position: 'top-right',
+        autoClose: 3000,
+        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+      });
+      return;
+    }
 
-const printJobs = useCallback((jobIds = []) => {
-  const ids = jobIds.length > 0 ? jobIds : Array.from(selectedJobs);
-  const jobsToPrint = jobs.filter(job => ids.includes(job.id));
-  
-  if (jobsToPrint.length === 0) {
-    toast.error('No jobs selected to print.', {
-      position: 'top-right',
-      autoClose: 3000,
-      className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
-    });
-    return;
-  }
+    const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
+    if (!cleaner) {
+      toast.error('Selected cleaner not found.', {
+        position: 'top-right',
+        autoClose: 3000,
+        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+      });
+      return;
+    }
 
-  // Generate premium print template with enhanced styling
-  const generatePrintTemplate = (job) => {
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body {
-              font-family: 'Helvetica Neue', Arial, sans-serif;
-              padding: 40px;
-              background-color: #f9fafb;
-              color: #1f2937;
-            }
-            .header {
-              font-size: 32px;
-              font-weight: 700;
-              color: #1e40af;
-              text-align: center;
-              margin-bottom: 30px;
-              border-bottom: 4px solid #3b82f6;
-              padding-bottom: 10px;
-              text-transform: uppercase;
-            }
-            .section {
-              margin: 25px 0;
-              padding: 20px;
-              background-color: #ffffff;
-              border-left: 6px solid #3b82f6;
-              border-radius: 8px;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
-            .label {
-              font-size: 18px;
-              font-weight: 600;
-              color: #1e40af;
-              margin-bottom: 10px;
-              text-transform: uppercase;
-            }
-            .value {
-              font-size: 16px;
-              color: #374151;
-              margin-left: 15px;
-              margin-bottom: 8px;
-              line-height: 1.5;
-            }
-            .highlight {
-              font-weight: 700;
-              color: #dc2626;
-              background-color: #fee2e2;
-              padding: 2px 8px;
-              border-radius: 4px;
-            }
-            .crucial {
-              font-size: 18px;
-              font-weight: 700;
-              color: #b91c1c;
-            }
-            @page { margin: 0.5in; }
-          </style>
-        </head>
-        <body>
-          <div class="header">🏨 ${job.location} - Room ${job.room}</div>
-          <div class="section">
-            <div class="label">Room Type</div>
-            <div class="value">${job.roomType}</div>
-          </div>
-          <div class="section">
-            <div class="label">Schedule</div>
-            <div class="value">Date: <span class="crucial">${new Date(job.date).toLocaleDateString()}</span></div>
-            <div class="value">Time: <span class="crucial">${job.startTime} - ${job.dueTime}</span></div>
-            <div class="value">Guests: <span class="crucial">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span></div>
-          </div>
-          <div class="section">
-            <div class="label">Property Details</div>
-            <div class="value">Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
-            <div class="value">Manager: ${job.unitManagerName}</div>
-            <div class="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
-            <div class="value">Beds: ${job.bedInfo}</div>
-            <div class="value">Bathrooms: ${job.bathInfo}</div>
-          </div>
-          <div class="section">
-            <div class="label">WiFi & Amenities</div>
-            <div class="value">Network: ${job.wifiNetwork}</div>
-            <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
-            ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
-          </div>
-          <div class="section">
-            <div class="label">Cleaning Instructions</div>
-            <div class="value">Standard: ${job.permanentInstructions}</div>
-            <div class="value">This Week: ${job.weekSpecificInstructions}</div>
-            <div class="value">Linen: ${job.linenInstructions}</div>
-          </div>
-          <div class="section">
-            <div class="label">Parking</div>
-            <div class="value">Space: ${job.parkingSpace}</div>
-            <div class="value">Instructions: ${job.parkingInstructions}</div>
-          </div>
-          ${job.assigned ? `
-            <div class="section">
-              <div class="label">Assigned Cleaner</div>
-              <div class="value">Name: <span class="crucial">${job.assigned.name}</span></div>
-              <div class="value">Team: ${job.assigned.team}</div>
-              <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
-              <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
-              <div class="value">Rating: (<span class="crucial">${job.assigned.rating.toFixed(1)}</span>)</div>
+    const cleanerJobs = jobs.filter(job => job.assigned && job.assigned.id === cleanerId);
+    if (cleanerJobs.length === 0) {
+      toast.info('No jobs assigned to this cleaner.', {
+        position: 'top-right',
+        autoClose: 3000,
+        className: 'bg-yellow-500 text-white font-medium rounded-lg shadow-lg p-4',
+      });
+      return;
+    }
+
+    const sortedJobs = cleanerJobs.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    const generateSummaryTemplate = () => {
+      return `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: 'Helvetica Neue', Arial, sans-serif;
+                padding: 40px;
+                background-color: #f9fafb;
+                color: #1f2937;
+              }
+              .header {
+                font-size: 28px;
+                font-weight: 700;
+                color: #1e40af;
+                text-align: center;
+                margin-bottom: 20px;
+                border-bottom: 4px solid #3b82f6;
+                padding-bottom: 10px;
+                text-transform: uppercase;
+              }
+              .subheader {
+                font-size: 20px;
+                font-weight: 600;
+                color: #374151;
+                margin-bottom: 15px;
+              }
+              .job-list {
+                margin: 20px 0;
+                padding: 15px;
+                background-color: #ffffff;
+                border-left: 6px solid #3b82f6;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+              }
+              .job-item {
+                font-size: 16px;
+                margin-bottom: 10px;
+                color: #374151;
+              }
+              .info {
+                font-size: 16px;
+                color: #374151;
+                margin-bottom: 10px;
+              }
+              .rating {
+                font-size: 16px;
+                color: #f59e0b;
+                font-weight: 600;
+              }
+              @page { margin: 0.5in; }
+            </style>
+          </head>
+          <body>
+            <div class="header">${cleaner.name} - ${cleaner.team}</div>
+            <div class="info">Today: ${new Date().toLocaleDateString()}</div>
+            <div class="info">Total Jobs: ${cleanerJobs.length}</div>
+            <div class="job-list">
+              <div class="subheader">Job Schedule</div>
+              ${sortedJobs.map((job, index) => `
+                <div class="job-item">${index + 1}) ${job.location} ${job.room} - ${job.startTime}</div>
+              `).join('')}
             </div>
-          ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
-        </body>
-      </html>
-    `;
-  };
+            <div class="info">Phone: ${cleaner.phone}</div>
+            <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
+          </body>
+        </html>
+      `;
+    };
 
-  const printWindow = window.open('', '', 'height=800,width=600');
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <style>
-          body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            padding: 40px;
-            background-color: #f9fafb;
-            color: #1f2937;
-          }
-          .header {
-            font-size: 32px;
-            font-weight: 700;
-            color: #1e40af;
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 4px solid #3b82f6;
-            padding-bottom: 10px;
-            text-transform: uppercase;
-          }
-          .section {
-            margin: 25px 0;
-            padding: 20px;
-            background-color: #ffffff;
-            border-left: 6px solid #3b82f6;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          }
-          .label {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1e40af;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-          }
-          .value {
-            font-size: 16px;
-            color: #374151;
-            margin-left: 15px;
-            margin-bottom: 8px;
-            line-height: 1.5;
-          }
-          .highlight {
-            font-weight: 700;
-            color: #dc2626;
-            background-color: #fee2e2;
-            padding: 2px 8px;
-            border-radius: 4px;
-          }
-          .crucial {
-            font-size: 18px;
-            font-weight: 700;
-            color: #b91c1c;
-          }
-          @page { margin: 0.5in; }
-        </style>
-      </head>
-      <body>
-        ${jobsToPrint.map(generatePrintTemplate).join('<div style="page-break-after: always;"></div>')}
-      </body>
-    </html>
-  `);
-  printWindow.document.close();
-  
-  setTimeout(() => {
-    printWindow.print();
-  }, 500);
-  
-  setJobs(prevJobs => 
-    prevJobs.map(job => 
-      ids.includes(job.id) ? { ...job, status: 'printed' } : job
-    )
-  );
-  setSelectedJobs(new Set());
-}, [jobs, selectedJobs]);
+    const printWindow = window.open('', '', 'height=600,width=400');
+    if (printWindow) {
+      printWindow.document.write(generateSummaryTemplate());
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    } else {
+      toast.error('Failed to open print window. Please check popup settings.', {
+        position: 'top-right',
+        autoClose: 3000,
+        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+      });
+    }
+  }, [jobs, filters.cleaner]);
 
-// ... (keep all remaining code unchanged) ...
+  const printJobs = useCallback((jobIds = []) => {
+    const ids = jobIds.length > 0 ? jobIds : Array.from(selectedJobs);
+    const jobsToPrint = jobs.filter(job => ids.includes(job.id));
+    
+    if (jobsToPrint.length === 0) {
+      toast.error('No jobs selected to print.', {
+        position: 'top-right',
+        autoClose: 3000,
+        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+      });
+      return;
+    }
+
+    const generatePrintTemplate = (job) => {
+      return `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: 'Helvetica Neue', Arial, sans-serif;
+                padding: 40px;
+                background-color: #f9fafb;
+                color: #1f2937;
+              }
+              .header {
+                font-size: 32px;
+                font-weight: 700;
+                color: #1e40af;
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 4px solid #3b82f6;
+                padding-bottom: 10px;
+                text-transform: uppercase;
+              }
+              .section {
+                margin: 25px 0;
+                padding: 20px;
+                background-color: #ffffff;
+                border-left: 6px solid #3b82f6;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              }
+              .label {
+                font-size: 18px;
+                font-weight: 600;
+                color: #1e40af;
+                margin-bottom: 10px;
+                text-transform: uppercase;
+              }
+              .value {
+                font-size: 16px;
+                color: #374151;
+                margin-left: 15px;
+                margin-bottom: 8px;
+                line-height: 1.5;
+              }
+              .highlight {
+                font-weight: 700;
+                color: #dc2626;
+                background-color: #fee2e2;
+                padding: 2px 8px;
+                border-radius: 4px;
+              }
+              .crucial {
+                font-size: 18px;
+                font-weight: 700;
+                color: #b91c1c;
+              }
+              @page { margin: 0.5in; }
+            </style>
+          </head>
+          <body>
+            <div class="header">🏨 ${job.location} - Room ${job.room}</div>
+            <div class="section">
+              <div class="label">Room Type</div>
+              <div class="value">${job.roomType}</div>
+            </div>
+            <div class="section">
+              <div class="label">Schedule</div>
+              <div class="value">Date: <span class="crucial">${new Date(job.date).toLocaleDateString()}</span></div>
+              <div class="value">Time: <span class="crucial">${job.startTime} - ${job.dueTime}</span></div>
+              <div class="value">Guests: <span class="crucial">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</span></div>
+            </div>
+            <div class="section">
+              <div class="label">Property Details</div>
+              <div class="value">Address: 131 Georgia Avenue, Ocean City, MD 21842</div>
+              <div class="value">Manager: ${job.unitManagerName}</div>
+              <div className="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
+              <div class="value">Beds: ${job.bedInfo}</div>
+              <div class="value">Bathrooms: ${job.bathInfo}</div>
+            </div>
+            <div class="section">
+              <div class="label">WiFi & Amenities</div>
+              <div class="value">Network: ${job.wifiNetwork}</div>
+              <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
+              ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
+            </div>
+            <div class="section">
+              <div class="label">Cleaning Instructions</div>
+              <div class="value">Standard: ${job.permanentInstructions}</div>
+              <div class="value">This Week: ${job.weekSpecificInstructions}</div>
+              <div class="value">Linen: ${job.linenInstructions}</div>
+            </div>
+            <div class="section">
+              <div class="label">Parking</div>
+              <div class="value">Space: ${job.parkingSpace}</div>
+              <div class="value">Instructions: ${job.parkingInstructions}</div>
+            </div>
+            ${job.assigned ? `
+              <div class="section">
+                <div class="label">Assigned Cleaner</div>
+                <div class="value">Name: <span class="crucial">${job.assigned.name}</span></div>
+                <div class="value">Team: ${job.assigned.team}</div>
+                <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
+                <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
+                <div class="value">Rating: (<span class="crucial">${job.assigned.rating.toFixed(1)}</span>)</div>
+              </div>
+            ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
+          </body>
+        </html>
+      `;
+    };
+
+    const printWindow = window.open('', '', 'height=800,width=600');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: 'Helvetica Neue', Arial, sans-serif;
+                padding: 40px;
+                background-color: #f9fafb;
+                color: #1f2937;
+              }
+              .header {
+                font-size: 32px;
+                font-weight: 700;
+                color: #1e40af;
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 4px solid #3b82f6;
+                padding-bottom: 10px;
+                text-transform: uppercase;
+              }
+              .section {
+                margin: 25px 0;
+                padding: 20px;
+                background-color: #ffffff;
+                border-left: 6px solid #3b82f6;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              }
+              .label {
+                font-size: 18px;
+                font-weight: 600;
+                color: #1e40af;
+                margin-bottom: 10px;
+                text-transform: uppercase;
+              }
+              .value {
+                font-size: 16px;
+                color: #374151;
+                margin-left: 15px;
+                margin-bottom: 8px;
+                line-height: 1.5;
+              }
+              .highlight {
+                font-weight: 700;
+                color: #dc2626;
+                background-color: #fee2e2;
+                padding: 2px 8px;
+                border-radius: 4px;
+              }
+              .crucial {
+                font-size: 18px;
+                font-weight: 700;
+                color: #b91c1c;
+              }
+              @page { margin: 0.5in; }
+            </style>
+          </head>
+          <body>
+            ${jobsToPrint.map(generatePrintTemplate).join('<div style="page-break-after: always;"></div>')}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    } else {
+      toast.error('Failed to open print window. Please check popup settings.', {
+        position: 'top-right',
+        autoClose: 3000,
+        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+      });
+    }
+    
+    setJobs(prevJobs => 
+      prevJobs.map(job => 
+        ids.includes(job.id) ? { ...job, status: 'printed' } : job
+      )
+    );
+    setSelectedJobs(new Set());
+  }, [jobs, selectedJobs]);
 
   const printJobsForCleaner = useCallback(() => {
     const cleanerId = Number(filters.cleaner);
@@ -531,18 +664,9 @@ const printJobs = useCallback((jobIds = []) => {
       toast.info('No jobs assigned to this cleaner.');
       return;
     }
+    printCleanerSummary();
     printJobs(cleanerJobs);
-  }, [jobs, filters.cleaner, printJobs]);
-
-  const sendNotification = useCallback((job, messageType = 'full') => {
-    const message = messageType === 'full' ? 
-      `Job Assignment - ${job.location} Location: ${job.location}, Room: ${job.room}` :
-      `${job.assigned?.name}: ${job.location} Room ${job.room}, ${job.startTime}`;
-    
-    console.log('Notification sent:', message);
-    alert(`✅ ${messageType === 'full' ? 'Email' : 'SMS'} sent to ${job.assigned?.name}!`);
-    setShowNotifyModal(null);
-  }, []);
+  }, [jobs, filters.cleaner, printCleanerSummary, printJobs]);
 
   const scheduleNotification = useCallback((job, scheduleData) => {
     setJobs(prevJobs => 
@@ -608,7 +732,7 @@ const printJobs = useCallback((jobIds = []) => {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="bg-blue-600 p-2 rounded-xl">
-                <Brush className="w-6 h-6 text-white" />
+                <Award className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Savvy OS</h1>
@@ -712,6 +836,14 @@ const printJobs = useCallback((jobIds = []) => {
               >
                 <Users className="w-4 h-4" />
                 Assign ({selectedJobs.size})
+              </button>
+              <button
+                onClick={() => filters.cleaner ? printCleanerSummary() : toast.error('Please select a cleaner.')}
+                disabled={!filters.cleaner}
+                className={`${filters.cleaner ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-300 cursor-not-allowed'} text-white px-4 py-3 rounded-lg transition-colors flex items-center gap-2 font-medium`}
+              >
+                <Printer className="w-4 h-4" />
+                Print Summary
               </button>
               <button
                 onClick={() => filters.cleaner ? printJobsForCleaner() : printJobs()}
