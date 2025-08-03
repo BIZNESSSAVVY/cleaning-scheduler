@@ -480,6 +480,7 @@ const ModernCleaningSystem = () => {
           </div>
         ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
       </div>
+      <img src="/qr-placeholder.png" class="qr-image" alt="QR Code Placeholder">
       <div class="quote">"${cleaningQuotes[index % cleaningQuotes.length]}"</div>
       <div class="premium-placeholder">[Premium Feature: QR Code for Job Check-In]</div>
       <div class="premium-placeholder">[Premium Feature: Real-Time Job Status Tracker]</div>
@@ -503,8 +504,9 @@ const ModernCleaningSystem = () => {
             .section { margin-bottom: 20px; }
             .label { font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.1em; }
             .value { font-size: 15px; color: #374151; line-height: 1.8; margin-left: 10px; }
-            .highlight { color: #dc2626; font-weight: 600; }
+            .highlight { color: #dc2626; font-2weight: 600; }
             .location-image { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; }
+            .qr-image { width: 150px; height: 150px; object-fit: contain; border-radius: 8px; margin: 20px auto; display: block; }
             .quote { font-size: 18px; font-style: italic; color: #1f2937; text-align: center; margin: 20px 0; padding: 20px; background: #f9fafb; border-left: 4px solid #3b82f6; border-radius: 8px; }
             .premium-placeholder { font-size: 14px; color: #6b7280; text-align: center; margin: 10px 0; padding: 10px; background: #f3f4f6; border-radius: 8px; }
             .footer { text-align: center; font-size: 12px; color: #6b7280; padding-top: 20px; border-top: 1px solid #e5e7eb; }
@@ -651,6 +653,7 @@ const ModernCleaningSystem = () => {
           </div>
         ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
       </div>
+      <img src="/qr-placeholder.png" class="qr-image" alt="QR Code Placeholder">
       <div class="quote">"${cleaningQuotes[index % cleaningQuotes.length]}"</div>
       <div class="premium-placeholder">[Premium Feature: QR Code for Job Check-In]</div>
       <div class="premium-placeholder">[Premium Feature: Real-Time Job Status Tracker]</div>
@@ -684,6 +687,7 @@ const ModernCleaningSystem = () => {
             .highlight { color: #dc2626; font-weight: 600; }
             .rating { color: #f59e0b; font-weight: 600; }
             .location-image { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; }
+            .qr-image { width: 150px; height: 150px; object-fit: contain; border-radius: 8px; margin: 20px auto; display: block; }
             .quote { font-size: 18px; font-style: italic; color: #1f2937; text-align: center; margin: 20px 0; padding: 20px; background: #f9fafb; border-left: 4px solid #3b82f6; border-radius: 8px; }
             .premium-placeholder { font-size: 14px; color: #6b7280; text-align: center; margin: 10px 0; padding: 10px; background: #f3f4f6; border-radius: 8px; }
             .footer { text-align: center; font-size: 12px; color: #6b7280; padding-top: 20px; border-top: 1px solid #e5e7eb; }
