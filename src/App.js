@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { unstable_batchedUpdates } from 'react-dom';
 import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
 
-// Static data generation with location-specific addresses
+// Static data generation with location-specific addresses (unchanged)
 const FAKE_DATA = (() => {
   const locations = [
     { name: 'Downtown Hotel', address: '123 Main St, Ocean City, MD 21842' },
@@ -22,7 +22,7 @@ const FAKE_DATA = (() => {
     name: `${['Sarah', 'Mike', 'Jessica', 'David', 'Maria', 'John', 'Lisa', 'Carlos', 'Amanda', 'Robert'][i % 10]} ${['Johnson', 'Smith', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor', 'Anderson'][Math.floor(i / 10)]}`,
     team: `Team ${Math.floor(i / 10) + 1}`,
     phone: `(443) ${String(Math.floor(Math.random() * 900) + 100)}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-    email: `${['sarah', 'mike', 'jessica', 'david', 'maria', 'john', 'lisa', 'carlos', 'amanda', 'robert'][i % 10]}.${['johnson', 'smith', 'williams', 'brown', 'davis', 'miller', 'wilson', 'moore', 'taylor', 'anderson'][Math.floor(i / 10)]}@cleanteam.com`,
+    email: `${['sarah', 'mike', 'jessica', 'david', 'maria', 'john', 'lisa', 'carlos', 'amanda', 'robert'][i % 10]}.${['johnson', 'smith', 'williams', 'brown', 'davis', 'milller', 'wilson', 'moore', 'taylor', 'anderson'][Math.floor(i / 10)]}@cleanteam.com`,
     available: Math.random() > 0.2,
     assignedJobs: Math.floor(Math.random() * 5),
     rating: 4 + Math.random()
@@ -70,16 +70,7 @@ const FAKE_DATA = (() => {
   return { jobs, cleaners, locations };
 })();
 
-// Cleaning quotes for job cards
-const cleaningQuotes = [
-  "A clean space is a happy place!",
-  "Shine bright like a freshly cleaned room!",
-  "Clean today, thriving tomorrow!",
-  "Sparkle and shine, every time!",
-  "Transforming spaces, one clean at a time."
-];
-
-// PERFORMANCE OPTIMIZATION: Memoized JobCard component
+// PERFORMANCE OPTIMIZATION: Memoized JobCard component (unchanged)
 const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, onNotify }) => (
   <div className={`
     bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer m-2
@@ -185,7 +176,7 @@ const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, 
   </div>
 ));
 
-// PERFORMANCE OPTIMIZATION: Virtualized grid cell component
+// PERFORMANCE OPTIMIZATION: Virtualized grid cell component (unchanged)
 const GridCell = React.memo(({ columnIndex, rowIndex, style, data }) => {
   const { filteredJobs, selectedJobs, onJobSelect, onViewDetail, onPrint, onNotify, columnsPerRow } = data;
   const jobIndex = rowIndex * columnsPerRow + columnIndex;
@@ -352,9 +343,8 @@ const ModernCleaningSystem = () => {
             @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
             body { font-family: 'Roboto', sans-serif; padding: 40px; background: #f8fafc; margin: 0; display: flex; justify-content: center; }
             .container { max-width: 900px; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 30px; }
-            .header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 28px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -30px -30px 30px -30px; position: relative; }
-            .header-logo { position: absolute; top: 10px; left: 20px; }
-            .header-logo img { height: 30px; }
+            .header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 28px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -30px -30px 30px -30px; }
+            .header-logo { font-size: 14px; color: #bfdbfe; position: absolute; top: 10px; left: 20px; font-weight: 500; }
             .info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 16px; color: #1f2937; margin-bottom: 30px; }
             .job-list { background: #f9fafb; padding: 20px; border-radius: 8px; }
             .job-item { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; font-size: 15px; color: #1f2937; border-bottom: 1px solid #e5e7eb; }
@@ -369,9 +359,7 @@ const ModernCleaningSystem = () => {
         <body>
           <div class="container">
             <div class="header">
-              <div class="header-logo">
-                <img src="https://img.freepik.com/free-vector/cleaning-service-logo-with-broom_23-2148492134.jpg" alt="Savvy OS Logo" />
-              </div>
+              <span class="header-logo">Savvy OS</span>
               ${cleaner.name} - ${cleaner.team}
             </div>
             <div class="info">
@@ -390,7 +378,7 @@ const ModernCleaningSystem = () => {
                 </div>
               `).join('')}
             </div>
-            <div class="footer">Generated by Savvy OS - Professional Cleaning Management System | Logo by Freepik</div>
+            <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
           </div>
         </body>
       </html>
@@ -412,7 +400,7 @@ const ModernCleaningSystem = () => {
 
   const printJobs = useCallback((jobIds = []) => {
     const ids = jobIds.length > 0 ? jobIds : Array.from(selectedJobs);
-    const jobsToPrint = jobs.filter(job => ids.includes(job.id)).sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const jobsToPrint = jobs.filter(job => ids.includes(job.id));
     
     if (jobsToPrint.length === 0) {
       toast.error('No jobs selected to print.', {
@@ -423,44 +411,15 @@ const ModernCleaningSystem = () => {
       return;
     }
 
-    const generateSummaryTemplate = () => `
-      <div class="summary">
-        <div class="summary-header">
-          <div class="header-logo">
-            <img src="https://img.freepik.com/free-vector/cleaning-service-logo-with-broom_23-2148492134.jpg" alt="Savvy OS Logo" />
-          </div>
-          Job Summary Report
-        </div>
-        <div class="summary-info">
-          <div>Date: ${new Date().toLocaleDateString()}</div>
-          <div>Total Jobs: ${jobsToPrint.length}</div>
-        </div>
-        <div class="job-list">
-          <div style="font-weight: 600; color: #1f2937; margin-bottom: 20px; font-size: 18px;">Selected Jobs</div>
-          ${jobsToPrint.map((job, index) => `
-            <div class="job-item">
-              <span>${index + 1}. ${job.location} Room ${job.room} - ${job.startTime}</span>
-              <span>Address: ${job.address}</span>
-              <span class="highlight">Lock: ${job.lockCode}</span>
-            </div>
-          `).join('')}
-        </div>
-        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System | Logo by Freepik</div>
-      </div>
-    `;
-
-    const generateJobTemplate = (job, index) => `
+    const generatePrintTemplate = (job) => `
       <div class="card">
         <div class="header">
-          <div class="header-logo">
-            <img src="https://img.freepik.com/free-vector/cleaning-service-logo-with-broom_23-2148492134.jpg" alt="Savvy OS Logo" />
-          </div>
+          <span class="header-logo">Savvy OS</span>
           ${job.location} - Room ${job.room}
         </div>
         <div class="section">
           <div class="label">Schedule</div>
           <div class="value">${new Date(job.date).toLocaleDateString()} | ${job.startTime} - ${job.dueTime}</div>
-          <div class="value">Predicted Time: ${job.predictedTime}</div>
           <div class="value">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</div>
         </div>
         <div class="section">
@@ -498,8 +457,7 @@ const ModernCleaningSystem = () => {
             <div class="value">Rating: ${job.assigned.rating.toFixed(1)}★</div>
           </div>
         ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
-        <div class="quote"><img src="https://cdn-icons-png.flaticon.com/512/929/929424.png" alt="Sparkle Icon" class="quote-icon" /> "${cleaningQuotes[index % cleaningQuotes.length]}"</div>
-        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System | Logo and Icon by Freepik</div>
+        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
       </div>
     `;
 
@@ -512,36 +470,20 @@ const ModernCleaningSystem = () => {
             <style>
               @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
               body { font-family: 'Roboto', sans-serif; padding: 40px; background: #f8fafc; margin: 0; display: flex; justify-content: center; }
-              .summary { max-width: 900px; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 30px; page-break-after: always; }
-              .summary-header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 28px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -30px -30px 30px -30px; position: relative; }
-              .header-logo { position: absolute; top: 10px; left: 20px; }
-              .header-logo img { height: 30px; }
-              .summary-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 16px; color: #1f2937; margin-bottom: 30px; }
-              .job-list { background: #f9fafb; padding: 20px; border-radius: 8px; }
-              .job-item { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; font-size: 15px; color: #1f2937; border-bottom: 1px solid #e5e7eb; }
-              .job-item:last-child { border-bottom: none; }
-              .card { max-width: 900px; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 30px; page-break-before: always; }
+              .card { max-width: 700px; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 30px; margin-bottom: 20px; page-break-before: always; }
               .header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 24px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -30px -30px 20px -30px; position: relative; }
+              .header-logo { font-size: 14px; color: #bfdbfe; position: absolute; top: 10px; left: 20px; font-weight: 500; }
               .section { margin-bottom: 20px; }
               .label { font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
               .value { font-size: 14px; color: #374151; line-height: 1.6; margin-left: 10px; }
               .highlight { color: #dc2626; font-weight: 600; }
-              .quote { font-style: italic; color: #4b5563; text-align: center; margin: 20px 0; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-              .quote-icon { width: 20px; height: 20px; }
-              .rating { color: #f59e0b; font-weight: 600; }
               .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #6b7280; }
               @page { margin: 0.75in; size: A4; }
-              @media print { 
-                body { padding: 0; background: #ffffff; } 
-                .summary, .card { box-shadow: none; margin: 0; } 
-                .summary { page-break-after: always; }
-                .card { page-break-before: always; }
-              }
+              @media print { body { padding: 0; background: #ffffff; } .card { box-shadow: none; margin: 0 0 20px 0; } }
             </style>
           </head>
           <body>
-            ${generateSummaryTemplate()}
-            ${jobsToPrint.map((job, index) => generateJobTemplate(job, index)).join('')}
+            ${jobsToPrint.map(generatePrintTemplate).join('')}
           </body>
         </html>
       `);
@@ -584,9 +526,7 @@ const ModernCleaningSystem = () => {
     const generateSummaryTemplate = () => `
       <div class="summary">
         <div class="summary-header">
-          <div class="header-logo">
-            <img src="https://img.freepik.com/free-vector/cleaning-service-logo-with-broom_23-2148492134.jpg" alt="Savvy OS Logo" />
-          </div>
+          <span class="header-logo">Savvy OS</span>
           ${cleaner.name} - ${cleaner.team}
         </div>
         <div class="summary-info">
@@ -605,16 +545,14 @@ const ModernCleaningSystem = () => {
             </div>
           `).join('')}
         </div>
-        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System | Logo by Freepik</div>
+        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
       </div>
     `;
 
-    const generateJobTemplate = (job, index) => `
+    const generateJobTemplate = (job) => `
       <div class="card">
         <div class="header">
-          <div class="header-logo">
-            <img src="https://img.freepik.com/free-vector/cleaning-service-logo-with-broom_23-2148492134.jpg" alt="Savvy OS Logo" />
-          </div>
+          <span class="header-logo">Savvy OS</span>
           ${job.location} - Room ${job.room}
         </div>
         <div class="section">
@@ -658,8 +596,7 @@ const ModernCleaningSystem = () => {
             <div class="value">Rating: ${job.assigned.rating.toFixed(1)}★</div>
           </div>
         ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
-        <div class="quote"><img src="https://cdn-icons-png.flaticon.com/512/929/929424.png" alt="Sparkle Icon" class="quote-icon" /> "${cleaningQuotes[index % cleaningQuotes.length]}"</div>
-        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System | Logo and Icon by Freepik</div>
+        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
       </div>
     `;
 
@@ -674,22 +611,19 @@ const ModernCleaningSystem = () => {
               body { font-family: 'Roboto', sans-serif; padding: 40px; background: #f8fafc; margin: 0; display: flex; justify-content: center; }
               .summary { max-width: 900px; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 30px; page-break-after: always; }
               .summary-header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 28px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -30px -30px 30px -30px; position: relative; }
-              .header-logo { position: absolute; top: 10px; left: 20px; }
-              .header-logo img { height: 30px; }
+              .header-logo { font-size: 14px; color: #bfdbfe; position: absolute; top: 10px; left: 20px; font-weight: 500; }
               .summary-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 16px; color: #1f2937; margin-bottom: 30px; }
               .job-list { background: #f9fafb; padding: 20px; border-radius: 8px; }
               .job-item { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; font-size: 15px; color: #1f2937; border-bottom: 1px solid #e5e7eb; }
               .job-item:last-child { border-bottom: none; }
-              .card { max-width: 900px; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 30px; page-break-before: always; }
+              .card { max-width: 700px; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 30px; page-break-before: always; }
               .header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 24px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -30px -30px 20px -30px; position: relative; }
               .section { margin-bottom: 20px; }
               .label { font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
               .value { font-size: 14px; color: #374151; line-height: 1.6; margin-left: 10px; }
               .highlight { color: #dc2626; font-weight: 600; }
-              .quote { font-style: italic; color: #4b5563; text-align: center; margin: 20px 0; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-              .quote-icon { width: 20px; height: 20px; }
               .rating { color: #f59e0b; font-weight: 600; }
-              .footer { text-align: center; margin-top: 20px; footer-size: 12px; color: #6b7280; }
+              .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #6b7280; }
               @page { margin: 0.75in; size: A4; }
               @media print { 
                 body { padding: 0; background: #ffffff; } 
@@ -701,7 +635,7 @@ const ModernCleaningSystem = () => {
           </head>
           <body>
             ${generateSummaryTemplate()}
-            ${jobsToPrint.map((job, index) => generateJobTemplate(job, index)).join('')}
+            ${jobsToPrint.map(generateJobTemplate).join('')}
           </body>
         </html>
       `);
@@ -1227,7 +1161,7 @@ const ModernCleaningSystem = () => {
           <div className="bg-white rounded-2xl max-w-md w-full">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Send Bulk SMS</h2>
+                <h2 className="text-xl font-bold text-gray-900">Bulk SMS</h2>
                 <button
                   onClick={() => setShowBulkSMSModal(false)}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -1237,22 +1171,21 @@ const ModernCleaningSystem = () => {
               </div>
               <div className="space-y-4">
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  <strong>To:</strong> {[...new Set(jobs.filter(job => job.assigned && selectedJobs.has(job.id)).map(job => job.assigned.name))].join(', ')}<br />
-                  <strong>Jobs:</strong> {selectedJobs.size} selected
+                  Sending to {[...new Set(jobs.filter(job => job.assigned && selectedJobs.has(job.id)).map(job => job.assigned.id))].length} cleaners
                 </div>
                 <textarea
                   value={bulkSMSMessage}
                   onChange={(e) => setBulkSMSMessage(e.target.value)}
-                  placeholder="Enter your message here..."
-                  className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your message..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-32 resize-none"
                 />
                 <button
                   onClick={sendBulkSMS}
                   disabled={!bulkSMSMessage.trim()}
-                  className={`${bulkSMSMessage.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2 w-full`}
+                  className={`w-full ${bulkSMSMessage.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white px-4 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2`}
                 >
                   <Send className="w-5 h-5" />
-                  Send SMS
+                  Send Bulk SMS
                 </button>
               </div>
             </div>
@@ -1260,7 +1193,7 @@ const ModernCleaningSystem = () => {
         </div>
       )}
 
-      {/* Schedule Notification Modal */}
+      {/* Schedule Modal */}
       {showScheduleModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-md w-full">
@@ -1276,20 +1209,31 @@ const ModernCleaningSystem = () => {
               </div>
               <div className="space-y-4">
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  <strong>To:</strong> {showScheduleModal.assigned?.name}<br />
-                  <strong>Job:</strong> {showScheduleModal.location} Room {showScheduleModal.room}
+                  <strong>Job:</strong> {showScheduleModal.location} Room {showScheduleModal.room}<br />
+                  <strong>Cleaner:</strong> {showScheduleModal.assigned?.name}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Notification Time</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Schedule Date & Time</label>
                   <input
                     type="datetime-local"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    onChange={(e) => {
-                      const scheduleData = { time: e.target.value };
-                      scheduleNotification(showScheduleModal, scheduleData);
-                    }}
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Message Type</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>Email Reminder</option>
+                    <option>SMS Reminder</option>
+                    <option>Both Email & SMS</option>
+                  </select>
+                </div>
+                <button
+                  onClick={() => scheduleNotification(showScheduleModal, { date: new Date(), type: 'email' })}
+                  className="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  <Calendar className="w-5 h-5" />
+                  Schedule Notification
+                </button>
               </div>
             </div>
           </div>
