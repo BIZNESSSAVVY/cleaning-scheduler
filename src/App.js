@@ -480,7 +480,7 @@ const ModernCleaningSystem = () => {
           </div>
         ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
       </div>
-      <img src="/qr-placeholder.png" class="qr-image" alt="QR Code Placeholder">
+      <img src="/qrcode.png" class="qr-image" alt="QR Code Placeholder">
       <div class="quote">"${cleaningQuotes[index % cleaningQuotes.length]}"</div>
       <div class="premium-placeholder">[Premium Feature: QR Code for Job Check-In]</div>
       <div class="premium-placeholder">[Premium Feature: Real-Time Job Status Tracker]</div>
@@ -653,7 +653,7 @@ const ModernCleaningSystem = () => {
           </div>
         ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
       </div>
-      <img src="/qr-placeholder.png" class="qr-image" alt="QR Code Placeholder">
+      <img src="/qrcode.png" class="qr-image" alt="QR Code Placeholder">
       <div class="quote">"${cleaningQuotes[index % cleaningQuotes.length]}"</div>
       <div class="premium-placeholder">[Premium Feature: QR Code for Job Check-In]</div>
       <div class="premium-placeholder">[Premium Feature: Real-Time Job Status Tracker]</div>
