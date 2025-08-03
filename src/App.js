@@ -420,15 +420,22 @@ const ModernCleaningSystem = () => {
     "A spotless room is a canvas for new memories. – Savvy OS"
   ];
 
+  // Placeholder image URL (replace with your own asset or URL when available)
+  const placeholderImageUrl = '/seawatch.jpg';
+
+  // Map locations to image URLs (default to placeholder for now)
+  const locationImages = FAKE_DATA.locations.reduce((acc, loc) => ({
+    ...acc,
+    [loc.name]: placeholderImageUrl // Use placeholder for all locations
+  }), {});
+
   const generateJobTemplate = (job, index) => `
     <div class="card">
       <div class="header">
         <span class="header-logo">Savvy OS</span>
         ${job.location} - Room ${job.room}
       </div>
-      <div class="image-placeholder">
-        <div class="image-text">[Premium Image: Professional Cleaning Scene]</div>
-      </div>
+      <img src="${locationImages[job.location] || placeholderImageUrl}" class="location-image" alt="Location Image">
       <div class="content">
         <div class="section">
           <div class="label">Schedule</div>
@@ -497,8 +504,7 @@ const ModernCleaningSystem = () => {
             .label { font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.1em; }
             .value { font-size: 15px; color: #374151; line-height: 1.8; margin-left: 10px; }
             .highlight { color: #dc2626; font-weight: 600; }
-            .image-placeholder { width: 100%; height: 200px; background: #e5e7eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
-            .image-text { font-size: 16px; color: #6b7280; text-align: center; }
+            .location-image { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; }
             .quote { font-size: 18px; font-style: italic; color: #1f2937; text-align: center; margin: 20px 0; padding: 20px; background: #f9fafb; border-left: 4px solid #3b82f6; border-radius: 8px; }
             .premium-placeholder { font-size: 14px; color: #6b7280; text-align: center; margin: 10px 0; padding: 10px; background: #f3f4f6; border-radius: 8px; }
             .footer { text-align: center; font-size: 12px; color: #6b7280; padding-top: 20px; border-top: 1px solid #e5e7eb; }
@@ -527,179 +533,185 @@ const ModernCleaningSystem = () => {
   setSelectedJobs(new Set());
 }, [jobs, selectedJobs]);
 
-  const printJobsForCleaner = useCallback(() => {
-    const cleanerId = Number(filters.cleaner);
-    if (!cleanerId) {
-      toast.error('Please select a cleaner to print jobs.', {
-        position: 'top-right',
-        autoClose: 3000,
-        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
-      });
-      return;
-    }
-    const cleanerJobs = jobs.filter(job => job.assigned && job.assigned.id === cleanerId).map(job => job.id);
-    if (cleanerJobs.length === 0) {
-      toast.info('No jobs assigned to this cleaner.', {
-        position: 'top-right',
-        autoClose: 3000,
-        className: 'bg-yellow-500 text-white font-medium rounded-lg shadow-lg p-4',
-      });
-      return;
-    }
+ const printJobsForCleaner = useCallback(() => {
+  const cleanerId = Number(filters.cleaner);
+  if (!cleanerId) {
+    toast.error('Please select a cleaner to print jobs.', {
+      position: 'top-right',
+      autoClose: 3000,
+      className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+    });
+    return;
+  }
+  const cleanerJobs = jobs.filter(job => job.assigned && job.assigned.id === cleanerId).map(job => job.id);
+  if (cleanerJobs.length === 0) {
+    toast.info('No jobs assigned to this cleaner.', {
+      position: 'top-right',
+      autoClose: 3000,
+      className: 'bg-yellow-500 text-white font-medium rounded-lg shadow-lg p-4',
+    });
+    return;
+  }
 
-    const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
-    const jobsToPrint = jobs.filter(job => cleanerJobs.includes(job.id)).sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
+  const jobsToPrint = jobs.filter(job => cleanerJobs.includes(job.id)).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-    // Array of witty cleaning-related quotes
-    const cleaningQuotes = [
-      "A clean space is a happy place. Let's make it sparkle! – Savvy OS",
-      "Dust is just glitter that lost its shine. Time to bring it back! – Savvy OS",
-      "Transform chaos into calm with every sweep. – Savvy OS",
-      "Clean today, serene tomorrow. – Savvy OS",
-      "A spotless room is a canvas for new memories. – Savvy OS"
-    ];
+  // Array of witty cleaning-related quotes
+  const cleaningQuotes = [
+    "A clean space is a happy place. Let's make it sparkle! – Savvy OS",
+    "Dust is just glitter that lost its shine. Time to bring it back! – Savvy OS",
+    "Transform chaos into calm with every sweep. – Savvy OS",
+    "Clean today, serene tomorrow. – Savvy OS",
+    "A spotless room is a canvas for new memories. – Savvy OS"
+  ];
 
-    const generateSummaryTemplate = () => `
-      <div class="summary">
-        <div class="header">
-          <span class="header-logo">Savvy OS</span>
-          ${cleaner.name} - ${cleaner.team}
-        </div>
-        <div class="info">
-          <div>Date: ${new Date().toLocaleDateString()}</div>
-          <div>Total Jobs: ${cleanerJobs.length}</div>
-          <div>Phone: ${cleaner.phone}</div>
-          <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
-        </div>
-        <div class="job-list">
-          <div class="job-list-header">Job Schedule</div>
-          ${jobsToPrint.map((job, index) => `
-            <div class="job-item">
-              <span>${index + 1}. ${job.location} Room ${job.room} - ${job.startTime}</span>
-              <span>Address: ${job.address}</span>
-              <span class="highlight">Lock: ${job.lockCode}</span>
-            </div>
-          `).join('')}
-        </div>
-        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
+  // Placeholder image URL (replace with your own asset or URL when available)
+  const placeholderImageUrl = '/seawatch.jpg';
+
+  // Map locations to image URLs (default to placeholder for now)
+  const locationImages = FAKE_DATA.locations.reduce((acc, loc) => ({
+    ...acc,
+    [loc.name]: placeholderImageUrl // Use placeholder for all locations
+  }), {});
+
+  const generateSummaryTemplate = () => `
+    <div class="summary">
+      <div class="header">
+        <span class="header-logo">Savvy OS</span>
+        ${cleaner.name} - ${cleaner.team}
       </div>
-    `;
-
-    const generateJobTemplate = (job, index) => `
-      <div class="card">
-        <div class="header">
-          <span class="header-logo">Savvy OS</span>
-          ${job.location} - Room ${job.room}
-        </div>
-        <div class="image-placeholder">
-          <div class="image-text">[Premium Image: Professional Cleaning Scene]</div>
-        </div>
-        <div class="content">
-          <div class="section">
-            <div class="label">Schedule</div>
-            <div class="value">${new Date(job.date).toLocaleDateString()} | ${job.startTime} - ${job.dueTime}</div>
-            <div class="value">Predicted Time: ${job.predictedTime}</div>
-            <div class="value">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</div>
-          </div>
-          <div class="section">
-            <div class="label">Property Details</div>
-            <div class="value">Address: ${job.address}</div>
-            <div class="value">Manager: ${job.unitManagerName}</div>
-            <div class="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
-            <div class="value">Beds: ${job.bedInfo}</div>
-            <div class="value">Baths: ${job.bathInfo}</div>
-          </div>
-          <div class="section">
-            <div class="label">WiFi & Amenities</div>
-            <div class="value">Network: ${job.wifiNetwork}</div>
-            <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
-            ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
-            ${job.linenPickup ? '<div class="value">Linen Pickup Required</div>' : ''}
-          </div>
-          <div class="section">
-            <div class="label">Cleaning Instructions</div>
-            <div class="value">Standard: ${job.permanentInstructions}</div>
-            <div class="value">This Week: ${job.weekSpecificInstructions}</div>
-            <div class="value">Linen: ${job.linenInstructions}</div>
-          </div>
-          <div class="section">
-            <div class="label">Parking</div>
-            <div class="value">Space: ${job.parkingSpace}</div>
-            <div class="value">Instructions: ${job.parkingInstructions}</div>
-          </div>
-          ${job.assigned ? `
-            <div class="section">
-              <div class="label">Assigned Cleaner</div>
-              <div class="value">Name: ${job.assigned.name}</div>
-              <div class="value">Team: ${job.assigned.team}</div>
-              <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
-              <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
-              <div class="value">Rating: ${job.assigned.rating.toFixed(1)}★</div>
-            </div>
-          ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
-        </div>
-        <div class="quote">"${cleaningQuotes[index % cleaningQuotes.length]}"</div>
-        <div class="premium-placeholder">[Premium Feature: QR Code for Job Check-In]</div>
-        <div class="premium-placeholder">[Premium Feature: Real-Time Job Status Tracker]</div>
-        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
+      <div class="info">
+        <div>Date: ${new Date().toLocaleDateString()}</div>
+        <div>Total Jobs: ${cleanerJobs.length}</div>
+        <div>Phone: ${cleaner.phone}</div>
+        <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
       </div>
-    `;
+      <div class="job-list">
+        <div class="job-list-header">Job Schedule</div>
+        ${jobsToPrint.map((job, index) => `
+          <div class="job-item">
+            <span>${index + 1}. ${job.location} Room ${job.room} - ${job.startTime}</span>
+            <span>Address: ${job.address}</span>
+            <span class="highlight">Lock: ${job.lockCode}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
+    </div>
+  `;
 
-    const printWindow = window.open('', '', 'height=800,width=600');
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>
-              @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-              body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; background: #ffffff; }
-              .summary { max-width: 900px; margin: 40px auto; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 40px; page-break-after: always; }
-              .card { max-width: 900px; min-height: 842px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 40px; display: flex; flex-direction: column; justify-content: space-between; page-break-before: always; }
-              .header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 32px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -40px -40px 30px -40px; position: relative; }
-              .header-logo { font-size: 16px; color: #bfdbfe; position: absolute; top: 10px; left: 20px; font-weight: 500; }
-              .summary-header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 32px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -40px -40px 30px -40px; position: relative; }
-              .info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 16px; color: #1f2937; margin-bottom: 30px; }
-              .job-list { background: #f9fafb; padding: 20px; border-radius: 8px; }
-              .job-list-header { font-weight: 600; color: #1f2937; margin-bottom: 20px; font-size: 20px; }
-              .job-item { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; font-size: 15px; color: #1f2937; border-bottom: 1px solid #e5e7eb; }
-              .job-item:last-child { border-bottom: none; }
-              .content { flex-grow: 1; }
-              .section { margin-bottom: 20px; }
-              .label { font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.1em; }
-              .value { font-size: 15px; color: #374151; line-height: 1.8; margin-left: 10px; }
-              .highlight { color: #dc2626; font-weight: 600; }
-              .rating { color: #f59e0b; font-weight: 600; }
-              .image-placeholder { width: 100%; height: 200px; background: #e5e7eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
-              .image-text { font-size: 16px; color: #6b7280; text-align: center; }
-              .quote { font-size: 18px; font-style: italic; color: #1f2937; text-align: center; margin: 20px 0; padding: 20px; background: #f9fafb; border-left: 4px solid #3b82f6; border-radius: 8px; }
-              .premium-placeholder { font-size: 14px; color: #6b7280; text-align: center; margin: 10px 0; padding: 10px; background: #f3f4f6; border-radius: 8px; }
-              .footer { text-align: center; font-size: 12px; color: #6b7280; padding-top: 20px; border-top: 1px solid #e5e7eb; }
-              @page { margin: 0.75in; size: A4; }
-              @media print { 
-                body { padding: 0; background: #ffffff; } 
-                .summary, .card { box-shadow: none; margin: 0 auto; } 
-                .summary { page-break-after: always; }
-                .card { page-break-before: always; }
-              }
-            </style>
-          </head>
-          <body>
-            ${generateSummaryTemplate()}
-            ${jobsToPrint.map((job, index) => generateJobTemplate(job, index)).join('')}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    } else {
-      toast.error('Failed to open print window. Please check popup settings.', {
-        position: 'top-right',
-        autoClose: 3000,
-        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
-      });
-    }
-  }, [jobs, filters.cleaner]);
+  const generateJobTemplate = (job, index) => `
+    <div class="card">
+      <div class="header">
+        <span class="header-logo">Savvy OS</span>
+        ${job.location} - Room ${job.room}
+      </div>
+      <img src="${locationImages[job.location] || placeholderImageUrl}" class="location-image" alt="Location Image">
+      <div class="content">
+        <div class="section">
+          <div class="label">Schedule</div>
+          <div class="value">${new Date(job.date).toLocaleDateString()} | ${job.startTime} - ${job.dueTime}</div>
+          <div class="value">Predicted Time: ${job.predictedTime}</div>
+          <div class="value">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</div>
+        </div>
+        <div class="section">
+          <div class="label">Property Details</div>
+          <div class="value">Address: ${job.address}</div>
+          <div class="value">Manager: ${job.unitManagerName}</div>
+          <div class="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
+          <div class="value">Beds: ${job.bedInfo}</div>
+          <div class="value">Baths: ${job.bathInfo}</div>
+        </div>
+        <div class="section">
+          <div class="label">WiFi & Amenities</div>
+          <div class="value">Network: ${job.wifiNetwork}</div>
+          <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
+          ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
+          ${job.linenPickup ? '<div class="value">Linen Pickup Required</div>' : ''}
+        </div>
+        <div class="section">
+          <div class="label">Cleaning Instructions</div>
+          <div class="value">Standard: ${job.permanentInstructions}</div>
+          <div class="value">This Week: ${job.weekSpecificInstructions}</div>
+          <div class="value">Linen: ${job.linenInstructions}</div>
+        </div>
+        <div class="section">
+          <div class="label">Parking</div>
+          <div class="value">Space: ${job.parkingSpace}</div>
+          <div class="value">Instructions: ${job.parkingInstructions}</div>
+        </div>
+        ${job.assigned ? `
+          <div class="section">
+            <div class="label">Assigned Cleaner</div>
+            <div class="value">Name: ${job.assigned.name}</div>
+            <div class="value">Team: ${job.assigned.team}</div>
+            <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
+            <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
+            <div class="value">Rating: ${job.assigned.rating.toFixed(1)}★</div>
+          </div>
+        ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
+      </div>
+      <div class="quote">"${cleaningQuotes[index % cleaningQuotes.length]}"</div>
+      <div class="premium-placeholder">[Premium Feature: QR Code for Job Check-In]</div>
+      <div class="premium-placeholder">[Premium Feature: Real-Time Job Status Tracker]</div>
+      <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
+    </div>
+  `;
+
+  const printWindow = window.open('', '', 'height=800,width=600');
+  if (printWindow) {
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+            body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; background: #ffffff; }
+            .summary { max-width: 900px; margin: 40px auto; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 40px; page-break-after: always; }
+            .card { max-width: 900px; min-height: 842px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 40px; display: flex; flex-direction: column; justify-content: space-between; page-break-before: always; }
+            .header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 32px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -40px -40px 30px -40px; position: relative; }
+            .header-logo { font-size: 16px; color: #bfdbfe; position: absolute; top: 10px; left: 20px; font-weight: 500; }
+            .summary-header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 32px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -40px -40px 30px -40px; position: relative; }
+            .info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 16px; color: #1f2937; margin-bottom: 30px; }
+            .job-list { background: #f9fafb; padding: 20px; border-radius: 8px; }
+            .job-list-header { font-weight: 600; color: #1f2937; margin-bottom: 20px; font-size: 20px; }
+            .job-item { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; font-size: 15px; color: #1f2937; border-bottom: 1px solid #e5e7eb; }
+            .job-item:last-child { border-bottom: none; }
+            .content { flex-grow: 1; }
+            .section { margin-bottom: 20px; }
+            .label { font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.1em; }
+            .value { font-size: 15px; color: #374151; line-height: 1.8; margin-left: 10px; }
+            .highlight { color: #dc2626; font-weight: 600; }
+            .rating { color: #f59e0b; font-weight: 600; }
+            .location-image { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; }
+            .quote { font-size: 18px; font-style: italic; color: #1f2937; text-align: center; margin: 20px 0; padding: 20px; background: #f9fafb; border-left: 4px solid #3b82f6; border-radius: 8px; }
+            .premium-placeholder { font-size: 14px; color: #6b7280; text-align: center; margin: 10px 0; padding: 10px; background: #f3f4f6; border-radius: 8px; }
+            .footer { text-align: center; font-size: 12px; color: #6b7280; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+            @page { margin: 0.75in; size: A4; }
+            @media print { 
+              body { padding: 0; background: #ffffff; } 
+              .summary, .card { box-shadow: none; margin: 0 auto; } 
+              .summary { page-break-after: always; }
+              .card { page-break-before: always; }
+            }
+          </style>
+        </head>
+        <body>
+          ${generateSummaryTemplate()}
+          ${jobsToPrint.map((job, index) => generateJobTemplate(job, index)).join('')}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  } else {
+    toast.error('Failed to open print window. Please check popup settings.', {
+      position: 'top-right',
+      autoClose: 3000,
+      className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+    });
+  }
+}, [jobs, filters.cleaner]);
 
   const scheduleNotification = useCallback((job, scheduleData) => {
     setJobs(prevJobs => prevJobs.map(j => j.id === job.id ? { ...j, scheduledNotification: scheduleData } : j));
