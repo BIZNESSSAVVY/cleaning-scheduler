@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { unstable_batchedUpdates } from 'react-dom';
 import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
 
-// Static data generation with location-specific addresses
+// Static data generation with location-specific addresses (unchanged)
 const FAKE_DATA = (() => {
   const locations = [
     { name: 'Downtown Hotel', address: '123 Main St, Ocean City, MD 21842' },
@@ -70,7 +70,7 @@ const FAKE_DATA = (() => {
   return { jobs, cleaners, locations };
 })();
 
-// PERFORMANCE OPTIMIZATION: Memoized JobCard component
+// PERFORMANCE OPTIMIZATION: Memoized JobCard component (unchanged)
 const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, onNotify }) => (
   <div className={`
     bg-white rounded-xl shadow-md border-2 transition-all duration-200 hover:shadow-lg cursor-pointer m-2
@@ -176,7 +176,7 @@ const JobCard = React.memo(({ job, isSelected, onSelect, onViewDetail, onPrint, 
   </div>
 ));
 
-// PERFORMANCE OPTIMIZATION: Virtualized grid cell component
+// PERFORMANCE OPTIMIZATION: Virtualized grid cell component (unchanged)
 const GridCell = React.memo(({ columnIndex, rowIndex, style, data }) => {
   const { filteredJobs, selectedJobs, onJobSelect, onViewDetail, onPrint, onNotify, columnsPerRow } = data;
   const jobIndex = rowIndex * columnsPerRow + columnIndex;
@@ -340,40 +340,45 @@ const ModernCleaningSystem = () => {
       <html>
         <head>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap');
-            body { font-family: 'Inter', sans-serif; padding: 30px; background: linear-gradient(135deg, #e0e7ff, #f7fafc); margin: 0; display: flex; justify-content: center; }
-            .container { max-width: 850px; background: rgba(255, 255, 255, 0.95); border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); overflow: hidden; backdrop-filter: blur(5px); }
-            .header { background: linear-gradient(135deg, #4a90e2, #63b3ed); color: #ffffff; padding: 25px; text-align: center; font-size: 28px; font-weight: 700; position: relative; }
-            .header::before { content: 'Savvy OS'; font-family: 'Roboto', sans-serif; font-size: 14px; color: #dbeafe; position: absolute; top: 5px; left: 20px; }
-            .info { padding: 20px 25px; display: grid; gap: 12px; font-size: 15px; color: #2d3748; background: #ffffff; border-bottom: 1px solid #edf2f7; }
-            .job-list { padding: 20px 25px; background: #f9fafb; }
-            .job-item { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; font-size: 15px; color: #2d3748; border-bottom: 1px solid #edf2f7; transition: background 0.3s; }
-            .job-item:hover { background: #edf2f7; }
-            .highlight { color: #e53e3e; font-weight: 600; }
-            .rating { color: #ecc94b; font-weight: 600; }
-            @page { margin: 0.5in; size: A4; }
+            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+            body { font-family: 'Roboto', sans-serif; padding: 40px; background: #f8fafc; margin: 0; display: flex; justify-content: center; }
+            .container { max-width: 900px; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 30px; }
+            .header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 28px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -30px -30px 30px -30px; }
+            .header-logo { font-size: 14px; color: #bfdbfe; position: absolute; top: 10px; left: 20px; font-weight: 500; }
+            .info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 16px; color: #1f2937; margin-bottom: 30px; }
+            .job-list { background: #f9fafb; padding: 20px; border-radius: 8px; }
+            .job-item { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; font-size: 15px; color: #1f2937; border-bottom: 1px solid #e5e7eb; }
+            .job-item:last-child { border-bottom: none; }
+            .highlight { color: #dc2626; font-weight: 600; }
+            .rating { color: #f59e0b; font-weight: 600; }
+            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #6b7280; }
+            @page { margin: 0.75in; size: A4; }
             @media print { body { padding: 0; background: #ffffff; } .container { box-shadow: none; margin: 0; } }
           </style>
         </head>
         <body>
           <div class="container">
-            <div class="header">${cleaner.name} - ${cleaner.team}</div>
+            <div class="header">
+              <span class="header-logo">Savvy OS</span>
+              ${cleaner.name} - ${cleaner.team}
+            </div>
             <div class="info">
-              <div>Today: ${new Date().toLocaleDateString()}</div>
+              <div>Date: ${new Date().toLocaleDateString()}</div>
               <div>Total Jobs: ${cleanerJobs.length}</div>
               <div>Phone: ${cleaner.phone}</div>
               <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
             </div>
             <div class="job-list">
-              <div style="font-weight: 600; color: #2d3748; margin-bottom: 15px;">Job Schedule</div>
+              <div style="font-weight: 600; color: #1f2937; margin-bottom: 20px; font-size: 18px;">Job Schedule</div>
               ${sortedJobs.map((job, index) => `
                 <div class="job-item">
-                  <span>${index + 1}) ${job.location} Room ${job.room} - ${job.startTime}</span>
+                  <span>${index + 1}. ${job.location} Room ${job.room} - ${job.startTime}</span>
                   <span>Address: ${job.address}</span>
                   <span class="highlight">Lock: ${job.lockCode}</span>
                 </div>
               `).join('')}
             </div>
+            <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
           </div>
         </body>
       </html>
@@ -391,7 +396,7 @@ const ModernCleaningSystem = () => {
         className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
       });
     }
-  }, [jobs, filters.cleaner, toast]);
+  }, [jobs, filters.cleaner]);
 
   const printJobs = useCallback((jobIds = []) => {
     const ids = jobIds.length > 0 ? jobIds : Array.from(selectedJobs);
@@ -408,7 +413,10 @@ const ModernCleaningSystem = () => {
 
     const generatePrintTemplate = (job) => `
       <div class="card">
-        <div class="header">${job.location} - Room ${job.room}</div>
+        <div class="header">
+          <span class="header-logo">Savvy OS</span>
+          ${job.location} - Room ${job.room}
+        </div>
         <div class="section">
           <div class="label">Schedule</div>
           <div class="value">${new Date(job.date).toLocaleDateString()} | ${job.startTime} - ${job.dueTime}</div>
@@ -449,6 +457,7 @@ const ModernCleaningSystem = () => {
             <div class="value">Rating: ${job.assigned.rating.toFixed(1)}★</div>
           </div>
         ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
+        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
       </div>
     `;
 
@@ -459,17 +468,18 @@ const ModernCleaningSystem = () => {
         <html>
           <head>
             <style>
-              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap');
-              body { font-family: 'Inter', sans-serif; padding: 20px; background: linear-gradient(135deg, #e0e7ff, #f7fafc); margin: 0; display: flex; justify-content: center; }
-              .card { max-width: 600px; background: rgba(255, 255, 255, 0.95); border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); padding: 20px; backdrop-filter: blur(5px); margin-bottom: 20px; page-break-before: always; }
-              .header { background: linear-gradient(135deg, #4a90e2, #63b3ed); color: #ffffff; padding: 12px; text-align: center; font-size: 20px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -20px -20px 15px -20px; position: relative; }
-              .header::before { content: 'Savvy OS'; font-family: 'Roboto', sans-serif; font-size: 12px; color: #dbeafe; position: absolute; top: 5px; left: 15px; }
-              .section { margin-bottom: 12px; }
-              .label { font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 5px; text-transform: uppercase; }
-              .value { font-size: 13px; color: #2d3748; line-height: 1.5; margin-left: 10px; }
-              .highlight { color: #e53e3e; font-weight: 600; }
-              @page { margin: 0.5in; size: A4; }
-              @media print { body { padding: 0; background: #ffffff; } .card { box-shadow: none; margin: 0 0 20px 0; padding: 15px; } }
+              @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+              body { font-family: 'Roboto', sans-serif; padding: 40px; background: #f8fafc; margin: 0; display: flex; justify-content: center; }
+              .card { max-width: 700px; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 30px; margin-bottom: 20px; page-break-before: always; }
+              .header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 24px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -30px -30px 20px -30px; position: relative; }
+              .header-logo { font-size: 14px; color: #bfdbfe; position: absolute; top: 10px; left: 20px; font-weight: 500; }
+              .section { margin-bottom: 20px; }
+              .label { font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+              .value { font-size: 14px; color: #374151; line-height: 1.6; margin-left: 10px; }
+              .highlight { color: #dc2626; font-weight: 600; }
+              .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #6b7280; }
+              @page { margin: 0.75in; size: A4; }
+              @media print { body { padding: 0; background: #ffffff; } .card { box-shadow: none; margin: 0 0 20px 0; } }
             </style>
           </head>
           <body>
@@ -493,17 +503,102 @@ const ModernCleaningSystem = () => {
   const printJobsForCleaner = useCallback(() => {
     const cleanerId = Number(filters.cleaner);
     if (!cleanerId) {
-      toast.error('Please select a cleaner to print jobs.');
+      toast.error('Please select a cleaner to print jobs.', {
+        position: 'top-right',
+        autoClose: 3000,
+        className: 'bg-red-500 text-white font-medium rounded-lg shadow-lg p-4',
+      });
       return;
     }
     const cleanerJobs = jobs.filter(job => job.assigned && job.assigned.id === cleanerId).map(job => job.id);
     if (cleanerJobs.length === 0) {
-      toast.info('No jobs assigned to this cleaner.');
+      toast.info('No jobs assigned to this cleaner.', {
+        position: 'top-right',
+        autoClose: 3000,
+        className: 'bg-yellow-500 text-white font-medium rounded-lg shadow-lg p-4',
+      });
       return;
     }
 
     const cleaner = FAKE_DATA.cleaners.find(c => c.id === cleanerId);
-    const jobsToPrint = jobs.filter(job => cleanerJobs.includes(job.id));
+    const jobsToPrint = jobs.filter(job => cleanerJobs.includes(job.id)).sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    const generateSummaryTemplate = () => `
+      <div class="summary">
+        <div class="summary-header">
+          <span class="header-logo">Savvy OS</span>
+          ${cleaner.name} - ${cleaner.team}
+        </div>
+        <div class="summary-info">
+          <div>Date: ${new Date().toLocaleDateString()}</div>
+          <div>Total Jobs: ${cleanerJobs.length}</div>
+          <div>Phone: ${cleaner.phone}</div>
+          <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
+        </div>
+        <div class="job-list">
+          <div style="font-weight: 600; color: #1f2937; margin-bottom: 20px; font-size: 18px;">Job Schedule</div>
+          ${jobsToPrint.map((job, index) => `
+            <div class="job-item">
+              <span>${index + 1}. ${job.location} Room ${job.room} - ${job.startTime}</span>
+              <span>Address: ${job.address}</span>
+              <span class="highlight">Lock: ${job.lockCode}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
+      </div>
+    `;
+
+    const generateJobTemplate = (job) => `
+      <div class="card">
+        <div class="header">
+          <span class="header-logo">Savvy OS</span>
+          ${job.location} - Room ${job.room}
+        </div>
+        <div class="section">
+          <div class="label">Schedule</div>
+          <div class="value">${new Date(job.date).toLocaleDateString()} | ${job.startTime} - ${job.dueTime}</div>
+          <div class="value">Predicted Time: ${job.predictedTime}</div>
+          <div class="value">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</div>
+        </div>
+        <div class="section">
+          <div class="label">Details</div>
+          <div class="value">Address: ${job.address}</div>
+          <div class="value">Manager: ${job.unitManagerName}</div>
+          <div class="value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
+          <div class="value">Beds: ${job.bedInfo}</div>
+          <div class="value">Baths: ${job.bathInfo}</div>
+        </div>
+        <div class="section">
+          <div class="label">WiFi</div>
+          <div class="value">Network: ${job.wifiNetwork}</div>
+          <div class="value">Password: <span class="highlight">${job.wifiPassword}</span></div>
+          ${job.wifiIncluded ? '<div class="value">WiFi Included</div>' : ''}
+        </div>
+        <div class="section">
+          <div class="label">Instructions</div>
+          <div class="value">Standard: ${job.permanentInstructions}</div>
+          <div class="value">This Week: ${job.weekSpecificInstructions}</div>
+          <div class="value">Linen: ${job.linenInstructions}</div>
+        </div>
+        <div class="section">
+          <div class="label">Parking</div>
+          <div class="value">Space: ${job.parkingSpace}</div>
+          <div class="value">Instructions: ${job.parkingInstructions}</div>
+        </div>
+        ${job.assigned ? `
+          <div class="section">
+            <div class="label">Cleaner</div>
+            <div class="value">Name: ${job.assigned.name}</div>
+            <div class="value">Team: ${job.assigned.team}</div>
+            <div class="value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
+            <div class="value">Email: <span class="highlight">${job.assigned.email}</span></div>
+            <div class="value">Rating: ${job.assigned.rating.toFixed(1)}★</div>
+          </div>
+        ` : '<div class="section"><div class="value">Not Assigned</div></div>'}
+        <div class="footer">Generated by Savvy OS - Professional Cleaning Management System</div>
+      </div>
+    `;
 
     const printWindow = window.open('', '', 'height=800,width=600');
     if (printWindow) {
@@ -512,92 +607,35 @@ const ModernCleaningSystem = () => {
         <html>
           <head>
             <style>
-              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap');
-              body { font-family: 'Inter', sans-serif; padding: 30px; background: linear-gradient(135deg, #e0e7ff, #f7fafc); margin: 0; display: flex; justify-content: center; }
-              .summary { max-width: 850px; background: rgba(255, 255, 255, 0.95); border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); padding: 20px; backdrop-filter: blur(5px); margin-bottom: 20px; }
-              .summary-header { background: linear-gradient(135deg, #4a90e2, #63b3ed); color: #ffffff; padding: 25px; text-align: center; font-size: 28px; font-weight: 700; position: relative; }
-              .summary-header::before { content: 'Savvy OS'; font-family: 'Roboto', sans-serif; font-size: 14px; color: #dbeafe; position: absolute; top: 5px; left: 20px; }
-              .summary-info { padding: 20px 25px; display: grid; gap: 12px; font-size: 15px; color: #2d3748; background: #ffffff; border-bottom: 1px solid #edf2f7; }
-              .job-list { padding: 20px 25px; background: #f9fafb; }
-              .job-item { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; font-size: 15px; color: #2d3748; border-bottom: 1px solid #edf2f7; transition: background 0.3s; }
-              .job-item:hover { background: #edf2f7; }
-              .highlight { color: #e53e3e; font-weight: 600; }
-              .rating { color: #ecc94b; font-weight: 600; }
-              .card { max-width: 600px; background: rgba(255, 255, 255, 0.95); border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); padding: 20px; backdrop-filter: blur(5px); margin-bottom: 20px; page-break-before: always; }
-              .card-header { background: linear-gradient(135deg, #4a90e2, #63b3ed); color: #ffffff; padding: 12px; text-align: center; font-size: 20px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -20px -20px 15px -20px; position: relative; }
-              .card-header::before { content: 'Savvy OS'; font-family: 'Roboto', sans-serif; font-size: 12px; color: #dbeafe; position: absolute; top: 5px; left: 15px; padding-right: 10px; }
-              .card-section { margin-bottom: 12px; }
-              .card-label { font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 5px; text-transform: uppercase; }
-              .card-value { font-size: 13px; color: #2d3748; line-height: 1.5; margin-left: 10px; }
-              @page { margin: 0.5in; size: A4; }
-              @media print { body { padding: 0; background: #ffffff; } .summary, .card { box-shadow: none; margin: 0 0 20px 0; padding: 15px; } .summary { page-break-after: always; } }
+              @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+              body { font-family: 'Roboto', sans-serif; padding: 40px; background: #f8fafc; margin: 0; display: flex; justify-content: center; }
+              .summary { max-width: 900px; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 30px; page-break-after: always; }
+              .summary-header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 28px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -30px -30px 30px -30px; position: relative; }
+              .header-logo { font-size: 14px; color: #bfdbfe; position: absolute; top: 10px; left: 20px; font-weight: 500; }
+              .summary-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 16px; color: #1f2937; margin-bottom: 30px; }
+              .job-list { background: #f9fafb; padding: 20px; border-radius: 8px; }
+              .job-item { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; font-size: 15px; color: #1f2937; border-bottom: 1px solid #e5e7eb; }
+              .job-item:last-child { border-bottom: none; }
+              .card { max-width: 700px; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); padding: 30px; page-break-before: always; }
+              .header { background: linear-gradient(90deg, #1e3a8a, #3b82f6); color: #ffffff; padding: 20px; text-align: center; font-size: 24px; font-weight: 700; border-radius: 8px 8px 0 0; margin: -30px -30px 20px -30px; position: relative; }
+              .section { margin-bottom: 20px; }
+              .label { font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+              .value { font-size: 14px; color: #374151; line-height: 1.6; margin-left: 10px; }
+              .highlight { color: #dc2626; font-weight: 600; }
+              .rating { color: #f59e0b; font-weight: 600; }
+              .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #6b7280; }
+              @page { margin: 0.75in; size: A4; }
+              @media print { 
+                body { padding: 0; background: #ffffff; } 
+                .summary, .card { box-shadow: none; margin: 0; } 
+                .summary { page-break-after: always; }
+                .card { page-break-before: always; }
+              }
             </style>
           </head>
           <body>
-            <div class="summary">
-              <div class="summary-header">${cleaner.name} - ${cleaner.team}</div>
-              <div class="summary-info">
-                <div>Today: ${new Date().toLocaleDateString()}</div>
-                <div>Total Jobs: ${cleanerJobs.length}</div>
-                <div>Phone: ${cleaner.phone}</div>
-                <div class="rating">Rating: ${'★'.repeat(Math.floor(cleaner.rating))}</div>
-              </div>
-              <div class="job-list">
-                <div style="font-weight: 600; color: #2d3748; margin-bottom: 15px;">Job Schedule</div>
-                ${jobsToPrint.map((job, index) => `
-                  <div class="job-item">
-                    <span>${index + 1}) ${job.location} Room ${job.room} - ${job.startTime}</span>
-                    <span>Address: ${job.address}</span>
-                    <span class="highlight">Lock: ${job.lockCode}</span>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-            ${jobsToPrint.map(job => `
-              <div class="card">
-                <div class="card-header">${job.location} - Room ${job.room}</div>
-                <div class="card-section">
-                  <div class="card-label">Schedule</div>
-                  <div class="card-value">${new Date(job.date).toLocaleDateString()} | ${job.startTime} - ${job.dueTime}</div>
-                  <div class="card-value">${job.guestCount} guests${job.dogCount > 0 ? `, ${job.dogCount} dogs` : ''}</div>
-                </div>
-                <div class="card-section">
-                  <div class="card-label">Details</div>
-                  <div class="card-value">Address: ${job.address}</div>
-                  <div class="card-value">Manager: ${job.unitManagerName}</div>
-                  <div class="card-value">Lock Code: <span class="highlight">${job.lockCode}</span></div>
-                  <div class="card-value">Beds: ${job.bedInfo}</div>
-                  <div class="card-value">Baths: ${job.bathInfo}</div>
-                </div>
-                <div class="card-section">
-                  <div class="card-label">WiFi</div>
-                  <div class="card-value">Network: ${job.wifiNetwork}</div>
-                  <div class="card-value">Password: <span class="highlight">${job.wifiPassword}</span></div>
-                  ${job.wifiIncluded ? '<div class="card-value">WiFi Included</div>' : ''}
-                </div>
-                <div class="card-section">
-                  <div class="card-label">Instructions</div>
-                  <div class="card-value">Standard: ${job.permanentInstructions}</div>
-                  <div class="card-value">This Week: ${job.weekSpecificInstructions}</div>
-                  <div class="card-value">Linen: ${job.linenInstructions}</div>
-                </div>
-                <div class="card-section">
-                  <div class="card-label">Parking</div>
-                  <div class="card-value">Space: ${job.parkingSpace}</div>
-                  <div class="card-value">Instructions: ${job.parkingInstructions}</div>
-                </div>
-                ${job.assigned ? `
-                  <div class="card-section">
-                    <div class="card-label">Cleaner</div>
-                    <div class="card-value">Name: ${job.assigned.name}</div>
-                    <div class="card-value">Team: ${job.assigned.team}</div>
-                    <div class="card-value">Phone: <span class="highlight">${job.assigned.phone}</span></div>
-                    <div class="card-value">Email: <span class="highlight">${job.assigned.email}</span></div>
-                    <div class="card-value">Rating: ${job.assigned.rating.toFixed(1)}★</div>
-                  </div>
-                ` : '<div class="card-section"><div class="card-value">Not Assigned</div></div>'}
-              </div>
-            `).join('')}
+            ${generateSummaryTemplate()}
+            ${jobsToPrint.map(generateJobTemplate).join('')}
           </body>
         </html>
       `);
@@ -744,7 +782,7 @@ const ModernCleaningSystem = () => {
           </div>
         </div>
 
-        {/* Controls - Fixed "Print Summary" button visibility */}
+        {/* Controls */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
