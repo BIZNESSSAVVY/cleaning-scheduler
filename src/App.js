@@ -5,7 +5,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { unstable_batchedUpdates } from 'react-dom';
 import { Calendar, Clock, Users, Wifi, Package, MapPin, Search, Bell, Printer, Eye, CheckCircle, AlertCircle, Phone, Mail, Filter, X, ChevronDown, ChevronUp, Plus, MessageSquare, Send, Zap, Star, Award } from 'lucide-react';
-
+import CleanerMapComponent from './CleanerMapComponent.js';
 // Static data generation with location-specific addresses (unchanged)
 const FAKE_DATA = (() => {
   const locations = [
@@ -210,13 +210,15 @@ const ModernCleaningSystem = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [bulkSMSMessage, setBulkSMSMessage] = useState('');
+  const [showMapView, setShowMapView] = useState(false);
   
   const gridRef = useRef();
+  
 
   // PERFORMANCE: Debounce search input
   const debouncedSetSearchTerm = useCallback(
     debounce((value) => setSearchTerm(value), 300),
-    []
+    [setSearchTerm]
   );
 
   // PERFORMANCE: Optimized filtered jobs
@@ -849,6 +851,37 @@ const ModernCleaningSystem = () => {
           </div>
         </div>
 
+        {/* MAP SECTION */}
+        <div className="bg-white rounded-xl shadow-md mb-6 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Location Overview</h3>
+              </div>
+              <button
+                onClick={() => setShowMapView(!showMapView)}
+                className={`px-4 py-2 rounded-lg transition-all duration-300 font-medium flex items-center gap-2 ${
+                  showMapView 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <MapPin className="w-4 h-4" />
+                {showMapView ? 'Hide Map' : 'Show Map'}
+              </button>
+            </div>
+          </div>
+          
+          <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
+            showMapView ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          }`}>
+            <div className="p-6">
+              <CleanerMapComponent />
+            </div>
+          </div>
+        </div>
+
         {/* Controls */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
@@ -1197,8 +1230,8 @@ const ModernCleaningSystem = () => {
               </div>
               <div className="space-y-4">
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  <strong>To:</strong> ${showNotifyModal.assigned?.name}<br />
-                  <strong>Job:</strong> ${showNotifyModal.location} Room ${showNotifyModal.room}
+                  <strong>To:</strong> {showNotifyModal.assigned?.name}<br />
+                  <strong>Job:</strong> {showNotifyModal.location} Room {showNotifyModal.room}
                 </div>
                 <div className="space-y-3">
                   <button
@@ -1238,7 +1271,7 @@ const ModernCleaningSystem = () => {
               </div>
               <div className="space-y-4">
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  Sending to ${[...new Set(jobs.filter(job => job.assigned && selectedJobs.has(job.id)).map(job => job.assigned.id))].length} cleaners
+                  Sending to {[...new Set(jobs.filter(job => job.assigned && selectedJobs.has(job.id)).map(job => job.assigned.id))].length} cleaners
                 </div>
                 <textarea
                   value={bulkSMSMessage}
@@ -1276,8 +1309,8 @@ const ModernCleaningSystem = () => {
               </div>
               <div className="space-y-4">
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  <strong>Job:</strong> ${showScheduleModal.location} Room ${showScheduleModal.room}<br />
-                  <strong>Cleaner:</strong> ${showScheduleModal.assigned?.name}
+                  <strong>Job:</strong> {showScheduleModal.location} Room {showScheduleModal.room}<br />
+                  <strong>Cleaner:</strong> {showScheduleModal.assigned?.name}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Schedule Date & Time</label>
