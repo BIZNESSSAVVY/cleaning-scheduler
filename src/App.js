@@ -774,12 +774,12 @@ const ModernCleaningSystem = () => {
 
       {/* Header */}
       <div className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-2 rounded-xl">
-                <Award className="w-6 h-6 text-white" />
-              </div>
+  <div className="max-w-7xl mx-auto px-6 py-4">
+    <div className="flex justify-between items-center">
+      <div className="flex items-center gap-3">
+        <div className="p-2">
+          <img src="/logo.png" alt="Savvy Logo" className="h-10 w-10 rounded-xl" />
+        </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Savvy OS</h1>
                 <p className="text-gray-600 text-sm">Professional Cleaning Management</p>
