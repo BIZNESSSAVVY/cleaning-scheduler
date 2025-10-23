@@ -1257,7 +1257,28 @@ const ModernCleaningSystem = () => {
             </h3>
           </div>
           {filteredJobs.length > 0 ? (
-            <div className="h-[650px] rounded-xl overflow-hidden">
+            <div className="h-[650px] rounded-xl overflow-hidden bg-gray-50/50">
+              <style>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                  width: 12px;
+                  height: 12px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                  background: #f1f5f9;
+                  border-radius: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                  background: linear-gradient(180deg, #3b82f6, #2563eb);
+                  border-radius: 6px;
+                  border: 2px solid #f1f5f9;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                  background: linear-gradient(180deg, #2563eb, #1d4ed8);
+                }
+                .custom-scrollbar::-webkit-scrollbar-corner {
+                  background: #f1f5f9;
+                }
+              `}</style>
               <Grid
                 ref={gridRef}
                 columnCount={columnsPerRow}
@@ -1267,7 +1288,7 @@ const ModernCleaningSystem = () => {
                 rowHeight={cardHeight}
                 itemData={gridData}
                 width={1200}
-                className="scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100"
+                className="custom-scrollbar"
               >
                 {GridCell}
               </Grid>
