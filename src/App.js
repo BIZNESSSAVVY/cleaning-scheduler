@@ -1255,87 +1255,43 @@ const ModernCleaningSystem = () => {
               Job Overview
               <span className="text-sm font-normal text-gray-500">({filteredJobs.length} jobs)</span>
             </h3>
-            {filteredJobs.length > 6 && (
-              <div className="flex items-center gap-2 text-sm text-gray-600 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
-                <ChevronDown className="w-4 h-4 text-blue-600 animate-bounce" />
-                <span className="font-semibold">Scroll down to see more jobs</span>
-              </div>
-            )}
           </div>
           {filteredJobs.length > 0 ? (
-            <div className="relative">
+            <div className="h-[650px] rounded-xl overflow-hidden bg-gray-50/50">
               <style>{`
                 .custom-scrollbar::-webkit-scrollbar {
-                  width: 16px;
-                  height: 16px;
+                  width: 12px;
+                  height: 12px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-track {
-                  background: #e2e8f0;
-                  border-radius: 8px;
-                  border: 3px solid white;
+                  background: #f1f5f9;
+                  border-radius: 6px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb {
                   background: linear-gradient(180deg, #3b82f6, #2563eb);
-                  border-radius: 8px;
-                  border: 3px solid #e2e8f0;
-                  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+                  border-radius: 6px;
+                  border: 2px solid #f1f5f9;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
                   background: linear-gradient(180deg, #2563eb, #1d4ed8);
-                  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
                 }
                 .custom-scrollbar::-webkit-scrollbar-corner {
-                  background: #e2e8f0;
-                }
-                .custom-scrollbar::-webkit-scrollbar-button {
-                  display: block;
-                  height: 16px;
-                  background: #3b82f6;
-                  border-radius: 8px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-button:vertical:decrement {
-                  background: linear-gradient(180deg, #3b82f6, #2563eb);
-                  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 4l-6 6h12z'/%3E%3C/svg%3E");
-                  background-repeat: no-repeat;
-                  background-position: center;
-                }
-                .custom-scrollbar::-webkit-scrollbar-button:vertical:increment {
-                  background: linear-gradient(180deg, #2563eb, #3b82f6);
-                  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 12l6-6H2z'/%3E%3C/svg%3E");
-                  background-repeat: no-repeat;
-                  background-position: center;
-                }
-                .custom-scrollbar::-webkit-scrollbar-button:hover {
-                  background-color: #1d4ed8;
+                  background: #f1f5f9;
                 }
               `}</style>
-              
-              {/* Scroll Helper Overlay */}
-              {filteredJobs.length > 6 && (
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/95 to-transparent pointer-events-none z-10 flex items-end justify-center pb-4">
-                  <div className="bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-bounce">
-                    <ChevronDown className="w-5 h-5" />
-                    <span className="font-bold text-sm">More Jobs Below - Scroll Down</span>
-                    <ChevronDown className="w-5 h-5" />
-                  </div>
-                </div>
-              )}
-
-              <div className="h-[650px] rounded-xl overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50/20 border-2 border-gray-200">
-                <Grid
-                  ref={gridRef}
-                  columnCount={columnsPerRow}
-                  columnWidth={cardWidth}
-                  height={650}
-                  rowCount={rowCount}
-                  rowHeight={cardHeight}
-                  itemData={gridData}
-                  width={1200}
-                  className="custom-scrollbar"
-                >
-                  {GridCell}
-                </Grid>
-              </div>
+              <Grid
+                ref={gridRef}
+                columnCount={columnsPerRow}
+                columnWidth={cardWidth}
+                height={650}
+                rowCount={rowCount}
+                rowHeight={cardHeight}
+                itemData={gridData}
+                width={1200}
+                className="custom-scrollbar"
+              >
+                {GridCell}
+              </Grid>
             </div>
           ) : (
             <div className="text-center py-20">
